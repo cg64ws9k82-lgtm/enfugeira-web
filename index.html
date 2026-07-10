@@ -4,18 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>En Fugeira FC</title>
+  <meta name="description" content="Sitio oficial de En Fugeira Football Club: plantel, fixture, resultados, goleadores, tarjetas y tabla de posiciones.">
   <link rel="icon" href="assets/crest.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
   <nav class="navbar">
     <div class="navbar-inner">
-      <div class="brand">
+      <a href="#top" class="brand">
         <img src="assets/crest.png" alt="Escudo En Fugeira FC">
-        <span>En Fugeira FC</span>
-      </div>
-      <div class="nav-links">
+        <span>En Fugeira <em>FC</em></span>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
         <a href="#plantel">Plantel</a>
         <a href="#fixture">Fixture</a>
         <a href="#estadisticas">Estadísticas</a>
@@ -26,13 +33,19 @@
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="hero-inner">
+  <header class="hero" id="top">
+    <div class="hero-bg"></div>
+    <div class="hero-inner container">
       <img class="hero-crest" src="assets/crest.png" alt="Escudo En Fugeira FC">
       <div class="hero-text">
+        <span class="eyebrow eyebrow-light">Fútbol amateur</span>
         <h1 id="team-name">En Fugeira FC</h1>
         <p id="team-meta"></p>
+
+        <div id="team-record" class="record-row"></div>
+
         <div id="next-match" class="next-match-box"></div>
+
         <div id="social-links" class="social-links"></div>
       </div>
     </div>
@@ -40,21 +53,29 @@
 
   <section id="plantel">
     <div class="container">
-      <h2>Plantel</h2>
-      <div id="plantel-grid" class="plantel-grid"></div>
+      <div class="section-head">
+        <span class="eyebrow">Plantel</span>
+        <h2>El equipo</h2>
+        <p class="section-sub">Los jugadores que ponen la cara cada fin de semana.</p>
+      </div>
+      <div id="plantel-grid"></div>
     </div>
   </section>
 
   <section id="fixture" class="section-alt">
     <div class="container">
-      <h2>Fixture y resultados</h2>
+      <div class="section-head">
+        <span class="eyebrow">Calendario</span>
+        <h2>Fixture y resultados</h2>
+        <p class="section-sub">Lo que viene y lo que ya jugamos esta temporada.</p>
+      </div>
       <div class="fixture-columns">
         <div>
-          <h3>Próximos partidos</h3>
+          <h3><svg class="icon" viewBox="0 0 24 24"><path d="M7 2v3M17 2v3M3.5 9h17M4 5h16a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg> Próximos partidos</h3>
           <div id="proximos-list"></div>
         </div>
         <div>
-          <h3>Resultados</h3>
+          <h3><svg class="icon" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Resultados</h3>
           <div id="resultados-list"></div>
         </div>
       </div>
@@ -63,14 +84,18 @@
 
   <section id="estadisticas">
     <div class="container">
-      <h2>Estadísticas</h2>
+      <div class="section-head">
+        <span class="eyebrow">Números</span>
+        <h2>Estadísticas</h2>
+        <p class="section-sub">Goleadores y disciplina del plantel, actualizado fecha a fecha.</p>
+      </div>
       <div class="stats-columns">
         <div>
-          <h3>Goleadores</h3>
+          <h3><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg> Goleadores</h3>
           <div id="goleadores-list"></div>
         </div>
         <div>
-          <h3>Tarjetas</h3>
+          <h3><svg class="icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" transform="rotate(10 12 12)"/></svg> Tarjetas</h3>
           <div id="tarjetas-list"></div>
         </div>
       </div>
@@ -79,30 +104,62 @@
 
   <section id="posiciones" class="section-alt">
     <div class="container">
-      <h2>Tabla de posiciones</h2>
+      <div class="section-head">
+        <span class="eyebrow">Torneo</span>
+        <h2>Tabla de posiciones</h2>
+        <p class="section-sub">Así viene la liga amateur, fecha a fecha.</p>
+      </div>
       <div id="posiciones-table"></div>
     </div>
   </section>
 
   <section id="galeria">
     <div class="container">
-      <h2>Galería</h2>
+      <div class="section-head">
+        <span class="eyebrow">Fotos</span>
+        <h2>Galería</h2>
+        <p class="section-sub">Momentos adentro y afuera de la cancha.</p>
+      </div>
       <div id="gallery-grid" class="gallery-grid">
         <p class="empty">Pronto vamos a subir fotos de los partidos acá.</p>
       </div>
     </div>
   </section>
 
+  <section id="sponsors" class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Gracias</span>
+        <h2>Sponsors</h2>
+      </div>
+      <div class="sponsors-row">
+        <span class="sponsor-chip">SUME · Servicios Médicos</span>
+        <span class="sponsor-chip">Maxpe Sport</span>
+        <span class="sponsor-chip">McDonald's</span>
+        <span class="sponsor-chip">Cervezas Norteña</span>
+      </div>
+    </div>
+  </section>
+
   <section id="contacto" class="section-alt">
     <div class="container">
-      <h2>Contacto</h2>
-      <p>¿Querés jugar con nosotros o tenés alguna consulta? Escribinos por WhatsApp o seguinos en Instagram.</p>
+      <div class="section-head">
+        <span class="eyebrow">Sumate</span>
+        <h2>Contacto</h2>
+        <p class="section-sub">¿Querés jugar con nosotros o tenés alguna consulta? Escribinos.</p>
+      </div>
       <div id="social-links-footer" class="social-links"></div>
     </div>
   </section>
 
   <footer>
-    <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/crest.png" alt="Escudo En Fugeira FC">
+        <span>En Fugeira FC</span>
+      </div>
+      <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
+    </div>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>

@@ -1,3 +1,17 @@
+const ICONS = {
+  whatsapp: `<svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20Zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.6.1a6.6 6.6 0 0 1-1.9-1.2 7.2 7.2 0 0 1-1.3-1.7c-.1-.2 0-.4.1-.5s.2-.3.4-.4a1.6 1.6 0 0 0 .2-.4.4.4 0 0 0 0-.4c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8s1.7 2.7 4.2 3.7a5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c-.1-.1-.2-.2-.5-.3Z"/></svg>`,
+  instagram: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>`,
+  ball: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg>`
+};
+
+const POSICION_ORDEN = ["Arquero", "Defensor", "Mediocampista", "Delantero"];
+const POSICION_PLURAL = {
+  Arquero: "Arqueros",
+  Defensor: "Defensores",
+  Mediocampista: "Mediocampistas",
+  Delantero: "Delanteros"
+};
+
 function fmtFecha(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
@@ -27,28 +41,72 @@ function renderHero(data) {
 
   let socialHtml = "";
   if (equipo.whatsapp) {
-    socialHtml += `<a href="${equipo.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>`;
+    socialHtml += `<a href="${equipo.whatsapp}" target="_blank" rel="noopener">${ICONS.whatsapp} WhatsApp</a>`;
   }
   if (equipo.instagram) {
-    socialHtml += `<a href="${equipo.instagram}" target="_blank" rel="noopener">Instagram</a>`;
+    socialHtml += `<a href="${equipo.instagram}" target="_blank" rel="noopener">${ICONS.instagram} Instagram</a>`;
   }
   document.getElementById("social-links").innerHTML = socialHtml;
   document.getElementById("social-links-footer").innerHTML = socialHtml;
 }
 
+function renderRecord(data) {
+  const cont = document.getElementById("team-record");
+  const propio = data.posiciones.find(p => p.equipo.toLowerCase().includes("en fugeira"));
+
+  let chipsHtml = "";
+  if (propio) {
+    chipsHtml = `
+      <div class="record-chip"><span class="value">${propio.pj}</span><span class="label">PJ</span></div>
+      <div class="record-chip"><span class="value">${propio.pg}</span><span class="label">PG</span></div>
+      <div class="record-chip"><span class="value">${propio.pe}</span><span class="label">PE</span></div>
+      <div class="record-chip"><span class="value">${propio.pp}</span><span class="label">PP</span></div>
+      <div class="record-chip"><span class="value">${propio.pts}</span><span class="label">Pts</span></div>
+    `;
+  }
+
+  const ultimos = data.partidos
+    .filter(p => p.estado === "jugado")
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .slice(-5);
+
+  const dotsHtml = ultimos.map(p => {
+    const gano = p.golesFavor > p.golesContra;
+    const perdio = p.golesFavor < p.golesContra;
+    const clase = gano ? "win" : perdio ? "loss" : "draw";
+    const letra = gano ? "G" : perdio ? "P" : "E";
+    return `<span class="form-dot ${clase}" title="${p.rival}: ${p.golesFavor}-${p.golesContra}">${letra}</span>`;
+  }).join("");
+
+  cont.innerHTML = chipsHtml + (dotsHtml ? `<div class="form-dots">${dotsHtml}</div>` : "");
+}
+
 function renderPlantel(jugadores) {
   const cont = document.getElementById("plantel-grid");
-  const ordenados = [...jugadores].sort((a, b) => a.numero - b.numero);
-  cont.innerHTML = ordenados.map(j => `
-    <div class="player-card">
-      <div class="player-photo">
-        ${j.foto ? `<img src="${j.foto}" alt="${j.nombre}">` : `<span>${j.numero}</span>`}
+  const grupos = POSICION_ORDEN
+    .map(pos => ({ pos, jugadores: jugadores.filter(j => j.posicion === pos).sort((a, b) => a.numero - b.numero) }))
+    .filter(g => g.jugadores.length);
+
+  const otros = jugadores.filter(j => !POSICION_ORDEN.includes(j.posicion));
+  if (otros.length) grupos.push({ pos: "Otros", jugadores: otros.sort((a, b) => a.numero - b.numero) });
+
+  cont.innerHTML = grupos.map(g => `
+    <div class="position-group">
+      <p class="position-title">${POSICION_PLURAL[g.pos] || g.pos}</p>
+      <div class="plantel-grid">
+        ${g.jugadores.map(j => `
+          <div class="player-card">
+            <div class="player-photo">
+              ${j.foto ? `<img src="${j.foto}" alt="${j.nombre}">` : `<span>${j.numero}</span>`}
+            </div>
+            <p class="player-number">#${j.numero}</p>
+            <p class="player-name">${j.nombre}</p>
+            <p class="player-position">${j.posicion}</p>
+          </div>
+        `).join("")}
       </div>
-      <p class="player-number">#${j.numero}</p>
-      <p class="player-name">${j.nombre}</p>
-      <p class="player-position">${j.posicion}</p>
     </div>
-  `).join("");
+  `).join("") || "<p class='empty'>Todavía no hay jugadores cargados.</p>";
 }
 
 function renderFixture(partidos) {
@@ -89,7 +147,7 @@ function renderGoleadores(goles) {
     <div class="stat-row">
       <span class="stat-rank">${i + 1}</span>
       <span class="stat-name">${jugador}</span>
-      <span class="stat-value">${cant} ⚽</span>
+      <span class="stat-value">${cant} ${ICONS.ball}</span>
     </div>
   `).join("") || "<p class='empty'>Todavía no hay goles cargados.</p>";
 }
@@ -148,9 +206,24 @@ function renderPosiciones(posiciones) {
   `;
 }
 
+function initNav() {
+  const toggle = document.getElementById("nav-toggle");
+  const links = document.getElementById("nav-links");
+  toggle.addEventListener("click", () => {
+    const open = links.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(open));
+  });
+  links.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
+    links.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+  }));
+}
+
 async function init() {
+  initNav();
   const data = await loadTeamData();
   renderHero(data);
+  renderRecord(data);
   renderPlantel(data.jugadores);
   renderFixture(data.partidos);
   renderGoleadores(data.goles);

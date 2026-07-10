@@ -1,0 +1,44 @@
+{
+  "equipo": {
+    "nombre": "En Fugeira FC",
+    "fundacion": 2026,
+    "torneo": "Liga Amateur",
+    "estadio": "Cancha del barrio",
+    "instagram": "https://instagram.com/enfugeirafc",
+    "whatsapp": "https://wa.me/59897135368"
+  },
+  "jugadores": [
+    { "nombre": "Gorriarán", "numero": 9, "posicion": "Delantero", "foto": "" },
+    { "nombre": "Rodríguez", "numero": 1, "posicion": "Arquero", "foto": "" },
+    { "nombre": "Fernández", "numero": 5, "posicion": "Defensor", "foto": "" },
+    { "nombre": "Pereira", "numero": 8, "posicion": "Mediocampista", "foto": "" },
+    { "nombre": "Suárez", "numero": 11, "posicion": "Delantero", "foto": "" }
+  ],
+  "partidos": [
+    { "fecha": "2026-06-14", "rival": "Los Pinos FC", "condicion": "Local", "golesFavor": 3, "golesContra": 1, "torneo": "Liga Amateur", "estado": "jugado" },
+    { "fecha": "2026-06-21", "rival": "Atlético Rincón", "condicion": "Visitante", "golesFavor": 2, "golesContra": 2, "torneo": "Liga Amateur", "estado": "jugado" },
+    { "fecha": "2026-06-28", "rival": "Deportivo Costa", "condicion": "Local", "golesFavor": 1, "golesContra": 0, "torneo": "Liga Amateur", "estado": "jugado" },
+    { "fecha": "2026-07-19", "rival": "Unión Norte", "condicion": "Visitante", "golesFavor": null, "golesContra": null, "torneo": "Liga Amateur", "estado": "proximo" }
+  ],
+  "goles": [
+    { "fecha": "2026-06-14", "jugador": "Gorriarán", "rival": "Los Pinos FC", "minuto": 23 },
+    { "fecha": "2026-06-14", "jugador": "Suárez", "rival": "Los Pinos FC", "minuto": 55 },
+    { "fecha": "2026-06-14", "jugador": "Gorriarán", "rival": "Los Pinos FC", "minuto": 78 },
+    { "fecha": "2026-06-21", "jugador": "Pereira", "rival": "Atlético Rincón", "minuto": 12 },
+    { "fecha": "2026-06-21", "jugador": "Gorriarán", "rival": "Atlético Rincón", "minuto": 60 },
+    { "fecha": "2026-06-28", "jugador": "Suárez", "rival": "Deportivo Costa", "minuto": 40 }
+  ],
+  "tarjetas": [
+    { "fecha": "2026-06-14", "jugador": "Fernández", "tipo": "Amarilla", "rival": "Los Pinos FC" },
+    { "fecha": "2026-06-21", "jugador": "Fernández", "tipo": "Amarilla", "rival": "Atlético Rincón" },
+    { "fecha": "2026-06-21", "jugador": "Pereira", "tipo": "Amarilla", "rival": "Atlético Rincón" },
+    { "fecha": "2026-06-28", "jugador": "Rodríguez", "tipo": "Roja", "rival": "Deportivo Costa" }
+  ],
+  "posiciones": [
+    { "equipo": "En Fugeira FC", "pj": 3, "pg": 2, "pe": 1, "pp": 0, "gf": 6, "gc": 3, "pts": 7 },
+    { "equipo": "Deportivo Costa", "pj": 3, "pg": 2, "pe": 0, "pp": 1, "gf": 5, "gc": 3, "pts": 6 },
+    { "equipo": "Los Pinos FC", "pj": 3, "pg": 1, "pe": 1, "pp": 1, "gf": 4, "gc": 5, "pts": 4 },
+    { "equipo": "Atlético Rincón", "pj": 3, "pg": 0, "pe": 2, "pp": 1, "gf": 3, "gc": 5, "pts": 2 },
+    { "equipo": "Unión Norte", "pj": 2, "pg": 0, "pe": 0, "pp": 2, "gf": 1, "gc": 4, "pts": 0 }
+  ]
+}

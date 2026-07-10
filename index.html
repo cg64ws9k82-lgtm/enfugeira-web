@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>En Fugeira FC</title>
+  <link rel="icon" href="assets/crest.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="brand">
+        <img src="assets/crest.png" alt="Escudo En Fugeira FC">
+        <span>En Fugeira FC</span>
+      </div>
+      <div class="nav-links">
+        <a href="#plantel">Plantel</a>
+        <a href="#fixture">Fixture</a>
+        <a href="#estadisticas">Estadísticas</a>
+        <a href="#posiciones">Posiciones</a>
+        <a href="#galeria">Galería</a>
+        <a href="#contacto">Contacto</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <img class="hero-crest" src="assets/crest.png" alt="Escudo En Fugeira FC">
+      <div class="hero-text">
+        <h1 id="team-name">En Fugeira FC</h1>
+        <p id="team-meta"></p>
+        <div id="next-match" class="next-match-box"></div>
+        <div id="social-links" class="social-links"></div>
+      </div>
+    </div>
+  </header>
+
+  <section id="plantel">
+    <div class="container">
+      <h2>Plantel</h2>
+      <div id="plantel-grid" class="plantel-grid"></div>
+    </div>
+  </section>
+
+  <section id="fixture" class="section-alt">
+    <div class="container">
+      <h2>Fixture y resultados</h2>
+      <div class="fixture-columns">
+        <div>
+          <h3>Próximos partidos</h3>
+          <div id="proximos-list"></div>
+        </div>
+        <div>
+          <h3>Resultados</h3>
+          <div id="resultados-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="estadisticas">
+    <div class="container">
+      <h2>Estadísticas</h2>
+      <div class="stats-columns">
+        <div>
+          <h3>Goleadores</h3>
+          <div id="goleadores-list"></div>
+        </div>
+        <div>
+          <h3>Tarjetas</h3>
+          <div id="tarjetas-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="posiciones" class="section-alt">
+    <div class="container">
+      <h2>Tabla de posiciones</h2>
+      <div id="posiciones-table"></div>
+    </div>
+  </section>
+
+  <section id="galeria">
+    <div class="container">
+      <h2>Galería</h2>
+      <div id="gallery-grid" class="gallery-grid">
+        <p class="empty">Pronto vamos a subir fotos de los partidos acá.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="section-alt">
+    <div class="container">
+      <h2>Contacto</h2>
+      <p>¿Querés jugar con nosotros o tenés alguna consulta? Escribinos por WhatsApp o seguinos en Instagram.</p>
+      <div id="social-links-footer" class="social-links"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sheets.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

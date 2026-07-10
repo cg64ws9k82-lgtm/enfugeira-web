@@ -577,21 +577,45 @@ section { padding: 64px 0; }
 .empty { color: var(--gray-500); font-style: italic; }
 
 /* Sponsors */
-.sponsors-row {
+.sponsor-main {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
-.sponsor-chip {
-  background: var(--gray-100);
-  color: var(--navy-700);
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--gray-300);
+.sponsors-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
 }
+
+.sponsor-card {
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.sponsor-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+.sponsor-card img {
+  max-height: 64px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.sponsor-card.featured {
+  padding: 22px 40px;
+  max-width: 340px;
+}
+
+.sponsor-card.featured img { max-height: 84px; }
 
 /* Footer */
 footer {

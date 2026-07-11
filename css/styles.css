@@ -992,6 +992,15 @@ button:focus-visible,
   font-weight: 600;
 }
 
+.modal-player-bio {
+  color: var(--gray-700);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+
 .modal-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

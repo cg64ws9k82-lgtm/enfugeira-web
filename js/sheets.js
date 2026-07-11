@@ -32,7 +32,8 @@ async function loadFromGoogleSheets() {
     nombre: r.nombre,
     numero: Number(r.numero) || 0,
     posicion: r.posicion,
-    foto: r.fotourl || r.foto || ""
+    foto: r.fotourl || r.foto || "",
+    descripcion: r.descripcion || ""
   }));
 
   const partidos = partidosRaw.map(normalizeRow).map(r => ({

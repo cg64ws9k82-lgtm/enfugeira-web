@@ -21,9 +21,12 @@ Creá una planilla nueva en Google Sheets con **5 hojas (tabs)**, con estos nomb
 de columna exactos en la primera fila:
 
 ### Hoja "Jugadores"
-| nombre | numero | posicion | fotoURL |
-|---|---|---|---|
-| Gorriarán | 9 | Delantero | (opcional, link a una foto) |
+| nombre | numero | posicion | fotoURL | descripcion |
+|---|---|---|---|---|
+| Gorriarán | 9 | Delantero | (opcional, link a una foto) | (opcional, 1-2 frases sobre el jugador) |
+
+`descripcion` es opcional: si la dejás vacía, el modal del jugador simplemente
+no muestra esa parte.
 
 ### Hoja "Partidos"
 | fecha | rival | condicion | golesFavor | golesContra | torneo | estado |

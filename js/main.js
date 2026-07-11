@@ -21,6 +21,12 @@ function fmtFecha(iso) {
   return `${d}/${m}/${y}`;
 }
 
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Si una fila de goles/tarjetas no trae "torneo" cargado a mano, lo deducimos
 // buscando en Partidos qué torneo se jugó esa fecha.
 function inferirTorneos(data) {
@@ -361,6 +367,7 @@ function abrirModalJugador(nombre) {
       </div>
       <h3 id="modal-player-name">${jugador.nombre}</h3>
       <p class="modal-player-meta">#${jugador.numero} · ${jugador.posicion}</p>
+      ${jugador.descripcion ? `<p class="modal-player-bio">${escapeHtml(jugador.descripcion)}</p>` : ""}
     </div>
     <div class="modal-stats-grid">
       <div class="modal-stat"><span class="value">${golesJugador.length}</span><span class="label">Goles</span></div>

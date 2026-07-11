@@ -8,11 +8,11 @@
     "whatsapp": "https://wa.me/59897135368"
   },
   "jugadores": [
-    { "nombre": "Gorriarán", "numero": 9, "posicion": "Delantero", "foto": "" },
-    { "nombre": "Rodríguez", "numero": 1, "posicion": "Arquero", "foto": "" },
-    { "nombre": "Fernández", "numero": 5, "posicion": "Defensor", "foto": "" },
-    { "nombre": "Pereira", "numero": 8, "posicion": "Mediocampista", "foto": "" },
-    { "nombre": "Suárez", "numero": 11, "posicion": "Delantero", "foto": "" }
+    { "nombre": "Gorriarán", "numero": 9, "posicion": "Delantero", "foto": "", "descripcion": "Referente ofensivo del equipo, juega en el club desde su fundación." },
+    { "nombre": "Rodríguez", "numero": 1, "posicion": "Arquero", "foto": "", "descripcion": "Arquero titular, se sumó al plantel en 2026." },
+    { "nombre": "Fernández", "numero": 5, "posicion": "Defensor", "foto": "", "descripcion": "" },
+    { "nombre": "Pereira", "numero": 8, "posicion": "Mediocampista", "foto": "", "descripcion": "" },
+    { "nombre": "Suárez", "numero": 11, "posicion": "Delantero", "foto": "", "descripcion": "" }
   ],
   "partidos": [
     { "fecha": "2026-03-08", "rival": "Los Pinos FC", "condicion": "Local", "golesFavor": 3, "golesContra": 1, "torneo": "Apertura", "estado": "jugado" },

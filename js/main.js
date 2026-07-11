@@ -64,9 +64,16 @@ function renderHero(data) {
 
   const box = document.getElementById("next-match");
   if (proximo) {
+    const local = proximo.condicion && proximo.condicion.toLowerCase() === "local";
+    const nosotros = `<div class="match-side"><div class="match-badge"><img src="assets/crest.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
+    const rivalHtml = `<div class="match-side"><div class="match-badge rival">${(proximo.rival || "?").charAt(0)}</div><span>${proximo.rival}</span></div>`;
     box.innerHTML = `
       <span class="tag">Próximo partido</span>
-      <p class="next-match-teams">En Fugeira FC vs ${proximo.rival}</p>
+      <div class="match-teams-row">
+        ${local ? nosotros : rivalHtml}
+        <span class="match-vs">VS</span>
+        ${local ? rivalHtml : nosotros}
+      </div>
       <p class="next-match-info">${fmtFecha(proximo.fecha)} · ${proximo.condicion} · ${proximo.torneo}</p>
     `;
   } else {
@@ -390,9 +397,9 @@ function initModal() {
   });
 }
 
-// --- Menú activo según la sección visible ---
+// --- Menú activo según la sección visible (navbar de arriba + barra inferior) ---
 function initScrollspy() {
-  const links = document.querySelectorAll(".nav-links a[href^='#']");
+  const links = document.querySelectorAll(".nav-links a[href^='#'], .bottom-nav a[href^='#']");
   const secciones = [...links]
     .map(a => document.querySelector(a.getAttribute("href")))
     .filter(Boolean);

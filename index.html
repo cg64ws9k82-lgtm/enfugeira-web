@@ -41,17 +41,19 @@
   <header class="hero" id="top">
     <div class="hero-bg"></div>
     <div class="hero-inner container">
-      <img class="hero-crest" src="assets/crest.png" alt="Escudo En Fugeira FC">
-      <div class="hero-text">
-        <h1 id="team-name">En Fugeira FC</h1>
-        <p id="team-meta"></p>
-
-        <div id="team-record" class="record-row"></div>
-
-        <div id="next-match" class="next-match-box"></div>
-
-        <div id="social-links" class="social-links"></div>
+      <div class="hero-top">
+        <img class="hero-crest" src="assets/crest.png" alt="Escudo En Fugeira FC">
+        <div class="hero-titles">
+          <h1 id="team-name">En Fugeira FC</h1>
+          <p id="team-meta"></p>
+        </div>
       </div>
+
+      <div id="team-record" class="record-row"></div>
+
+      <div id="next-match" class="next-match-box"></div>
+
+      <div id="social-links" class="social-links"></div>
     </div>
   </header>
 
@@ -179,6 +181,29 @@
       <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
     </div>
   </footer>
+
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="#top" data-target="top">
+      <svg class="icon" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7M5 10v10h14V10"/></svg>
+      <span>Inicio</span>
+    </a>
+    <a href="#plantel" data-target="plantel">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+      <span>Plantel</span>
+    </a>
+    <a href="#fixture" data-target="fixture">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M7 2v3M17 2v3M3.5 9h17M4 5h16a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg>
+      <span>Fixture</span>
+    </a>
+    <a href="#estadisticas" data-target="estadisticas">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg>
+      <span>Stats</span>
+    </a>
+    <a href="#posiciones" data-target="posiciones">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>
+      <span>Tabla</span>
+    </a>
+  </nav>
 
   <div id="player-modal" class="modal-overlay" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-player-name">

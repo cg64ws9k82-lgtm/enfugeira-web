@@ -132,7 +132,7 @@ function renderPlantel(jugadores) {
       <p class="position-title">${POSICION_PLURAL[g.pos] || g.pos}</p>
       <div class="plantel-grid">
         ${g.jugadores.map(j => `
-          <div class="player-card">
+          <div class="player-card" data-jugador="${j.nombre}" tabindex="0" role="button" aria-label="Ver estadísticas de ${j.nombre}">
             <div class="player-photo">
               ${j.foto ? `<img src="${j.foto}" alt="${j.nombre}">` : `<span>${j.numero}</span>`}
             </div>
@@ -144,6 +144,16 @@ function renderPlantel(jugadores) {
       </div>
     </div>
   `).join("") || "<p class='empty'>Todavía no hay jugadores cargados.</p>";
+
+  cont.querySelectorAll(".player-card").forEach(card => {
+    card.addEventListener("click", () => abrirModalJugador(card.dataset.jugador));
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        abrirModalJugador(card.dataset.jugador);
+      }
+    });
+  });
 }
 
 function renderFixture(partidos) {
@@ -300,8 +310,136 @@ function initNav() {
   }));
 }
 
+// --- Modal de jugador ---
+
+function contarTarjetas(lista) {
+  return lista.reduce((acc, t) => {
+    if (t.tipo.toLowerCase().startsWith("amar")) acc.amarillas++;
+    if (t.tipo.toLowerCase().startsWith("roj")) acc.rojas++;
+    return acc;
+  }, { amarillas: 0, rojas: 0 });
+}
+
+function abrirModalJugador(nombre) {
+  const jugador = appData.jugadores.find(j => j.nombre === nombre);
+  if (!jugador) return;
+
+  const golesJugador = appData.goles.filter(g => g.jugador === nombre);
+  const tarjetasJugador = appData.tarjetas.filter(t => t.jugador === nombre);
+  const totalTarjetas = contarTarjetas(tarjetasJugador);
+
+  const torneos = getTorneosOrdenados(appData).map(t => {
+    const goles = golesJugador.filter(g => g.torneo === t).length;
+    const tarjetas = contarTarjetas(tarjetasJugador.filter(x => x.torneo === t));
+    return { torneo: t, goles, ...tarjetas };
+  }).filter(t => t.goles || t.amarillas || t.rojas);
+
+  const torneosHtml = torneos.length
+    ? torneos.map(t => `
+        <div class="modal-torneo-row">
+          <span class="nombre">${t.torneo}</span>
+          <span class="badges">
+            ${t.goles ? `${t.goles} ${ICONS.ball}` : ""}
+            ${t.amarillas ? `<span class="card-badge yellow">${t.amarillas}</span>` : ""}
+            ${t.rojas ? `<span class="card-badge red">${t.rojas}</span>` : ""}
+          </span>
+        </div>
+      `).join("")
+    : "<p class='empty'>Todavía no hay estadísticas cargadas.</p>";
+
+  document.getElementById("modal-body").innerHTML = `
+    <div class="modal-player-header">
+      <div class="modal-player-photo">
+        ${jugador.foto ? `<img src="${jugador.foto}" alt="${jugador.nombre}">` : `<span>${jugador.numero}</span>`}
+      </div>
+      <h3 id="modal-player-name">${jugador.nombre}</h3>
+      <p class="modal-player-meta">#${jugador.numero} · ${jugador.posicion}</p>
+    </div>
+    <div class="modal-stats-grid">
+      <div class="modal-stat"><span class="value">${golesJugador.length}</span><span class="label">Goles</span></div>
+      <div class="modal-stat"><span class="value">${totalTarjetas.amarillas}</span><span class="label">Amarillas</span></div>
+      <div class="modal-stat"><span class="value">${totalTarjetas.rojas}</span><span class="label">Rojas</span></div>
+    </div>
+    <div class="modal-torneos">
+      <h4>Por torneo</h4>
+      ${torneosHtml}
+    </div>
+  `;
+
+  const overlay = document.getElementById("player-modal");
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add("open"));
+  document.body.style.overflow = "hidden";
+}
+
+function cerrarModal() {
+  const overlay = document.getElementById("player-modal");
+  overlay.classList.remove("open");
+  document.body.style.overflow = "";
+  setTimeout(() => {
+    if (!overlay.classList.contains("open")) overlay.hidden = true;
+  }, 200);
+}
+
+function initModal() {
+  const overlay = document.getElementById("player-modal");
+  document.getElementById("modal-close").addEventListener("click", cerrarModal);
+  overlay.addEventListener("click", e => { if (e.target === overlay) cerrarModal(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !overlay.hidden) cerrarModal();
+  });
+}
+
+// --- Menú activo según la sección visible ---
+function initScrollspy() {
+  const links = document.querySelectorAll(".nav-links a[href^='#']");
+  const secciones = [...links]
+    .map(a => document.querySelector(a.getAttribute("href")))
+    .filter(Boolean);
+
+  if (!secciones.length) return;
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === `#${entry.target.id}`));
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+
+  secciones.forEach(sec => observer.observe(sec));
+}
+
+// --- Animación de aparición al hacer scroll ---
+function initReveal() {
+  const elementos = document.querySelectorAll(".reveal");
+  if (!elementos.length || !("IntersectionObserver" in window)) {
+    elementos.forEach(el => el.classList.add("in-view"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in-view");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  elementos.forEach(el => observer.observe(el));
+}
+
+function ocultarLoader() {
+  const loader = document.getElementById("page-loader");
+  loader.classList.add("hidden");
+  setTimeout(() => loader.remove(), 400);
+}
+
 async function init() {
   initNav();
+  initModal();
+  initScrollspy();
+
   appData = inferirTorneos(await loadTeamData());
   torneoActual = getTorneoActualPorDefecto(appData);
 
@@ -312,6 +450,9 @@ async function init() {
   renderTorneoFilter();
   renderVistaTorneo();
   document.getElementById("year").textContent = new Date().getFullYear();
+
+  initReveal();
+  ocultarLoader();
 }
 
 init();

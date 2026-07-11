@@ -13,6 +13,11 @@
 </head>
 <body>
 
+  <div id="page-loader" class="page-loader">
+    <img src="assets/crest.png" alt="">
+    <span>Cargando datos del equipo…</span>
+  </div>
+
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="#top" class="brand">
@@ -51,7 +56,7 @@
   </header>
 
   <section id="plantel">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Plantel</span>
         <h2>El equipo</h2>
@@ -62,7 +67,7 @@
   </section>
 
   <section id="fixture" class="section-alt">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Calendario</span>
         <h2>Fixture y resultados</h2>
@@ -82,7 +87,7 @@
   </section>
 
   <section id="estadisticas">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Números</span>
         <h2>Estadísticas</h2>
@@ -103,7 +108,7 @@
   </section>
 
   <section id="posiciones" class="section-alt">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Torneo</span>
         <h2>Tabla de posiciones</h2>
@@ -115,7 +120,7 @@
   </section>
 
   <section id="galeria">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Fotos</span>
         <h2>Galería</h2>
@@ -128,7 +133,7 @@
   </section>
 
   <section id="sponsors" class="section-alt">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Gracias</span>
         <h2>Sponsors</h2>
@@ -155,7 +160,7 @@
   </section>
 
   <section id="contacto" class="section-alt">
-    <div class="container">
+    <div class="container reveal">
       <div class="section-head">
         <span class="eyebrow">Sumate</span>
         <h2>Contacto</h2>
@@ -174,6 +179,13 @@
       <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
     </div>
   </footer>
+
+  <div id="player-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-player-name">
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="js/config.js"></script>

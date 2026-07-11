@@ -49,18 +49,21 @@ async function loadFromGoogleSheets() {
     fecha: r.fecha,
     jugador: r.jugador,
     rival: r.rival,
-    minuto: Number(r.minuto) || null
+    minuto: Number(r.minuto) || null,
+    torneo: r.torneo || ""
   }));
 
   const tarjetas = tarjetasRaw.map(normalizeRow).map(r => ({
     fecha: r.fecha,
     jugador: r.jugador,
     tipo: r.tipo,
-    rival: r.rival
+    rival: r.rival,
+    torneo: r.torneo || ""
   }));
 
   const posiciones = posicionesRaw.map(normalizeRow).map(r => ({
     equipo: r.equipo,
+    torneo: r.torneo || "",
     pj: Number(r.pj) || 0,
     pg: Number(r.pg) || 0,
     pe: Number(r.pe) || 0,

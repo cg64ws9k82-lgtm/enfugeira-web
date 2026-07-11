@@ -452,6 +452,7 @@ section { padding: 64px 0; }
 
 .match-date { color: var(--gray-500); min-width: 78px; font-size: 0.82rem; }
 .match-teams { font-weight: 700; flex: 1; }
+.match-tags { display: flex; gap: 6px; align-items: center; }
 .match-cond {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -460,6 +461,44 @@ section { padding: 64px 0; }
   background: var(--gray-100);
   padding: 3px 9px;
   border-radius: 999px;
+}
+
+.match-torneo {
+  font-size: 0.72rem;
+  color: var(--navy-700);
+  background: var(--sky-100);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* Torneo filter */
+.torneo-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.torneo-pill {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--navy-700);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.torneo-pill:hover { border-color: var(--navy-700); }
+
+.torneo-pill.active {
+  background: var(--navy-900);
+  border-color: var(--navy-900);
+  color: var(--white);
 }
 
 /* Stats */

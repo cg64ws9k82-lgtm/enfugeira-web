@@ -12,10 +12,33 @@ const POSICION_PLURAL = {
   Delantero: "Delanteros"
 };
 
+let appData = null;
+let torneoActual = null;
+
 function fmtFecha(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+// Si una fila de goles/tarjetas no trae "torneo" cargado a mano, lo deducimos
+// buscando en Partidos qué torneo se jugó esa fecha.
+function inferirTorneos(data) {
+  const torneoPorFecha = {};
+  data.partidos.forEach(p => { if (p.fecha && p.torneo) torneoPorFecha[p.fecha] = p.torneo; });
+
+  data.goles.forEach(g => { if (!g.torneo) g.torneo = torneoPorFecha[g.fecha] || ""; });
+  data.tarjetas.forEach(t => { if (!t.torneo) t.torneo = torneoPorFecha[t.fecha] || ""; });
+  return data;
+}
+
+function getTorneosOrdenados(data) {
+  const primeraFecha = {};
+  data.partidos.forEach(p => {
+    if (!p.torneo) return;
+    if (!primeraFecha[p.torneo] || p.fecha < primeraFecha[p.torneo]) primeraFecha[p.torneo] = p.fecha;
+  });
+  return Object.keys(primeraFecha).sort((a, b) => primeraFecha[a].localeCompare(primeraFecha[b]));
 }
 
 function renderHero(data) {
@@ -52,7 +75,9 @@ function renderHero(data) {
 
 function renderRecord(data) {
   const cont = document.getElementById("team-record");
-  const propio = data.posiciones.find(p => p.equipo.toLowerCase().includes("en fugeira"));
+  const propio = data.posiciones.find(p =>
+    p.equipo.toLowerCase().includes("en fugeira") && p.torneo === torneoActual
+  );
 
   let chipsHtml = "";
   if (propio) {
@@ -122,7 +147,10 @@ function renderFixture(partidos) {
       <div class="match-row ${claseResultado}">
         <span class="match-date">${fmtFecha(p.fecha)}</span>
         <span class="match-teams">En Fugeira FC ${p.golesFavor} - ${p.golesContra} ${p.rival}</span>
-        <span class="match-cond">${p.condicion}</span>
+        <span class="match-tags">
+          <span class="match-cond">${p.condicion}</span>
+          ${p.torneo ? `<span class="match-torneo">${p.torneo}</span>` : ""}
+        </span>
       </div>
     `;
   }).join("") || "<p class='empty'>Todavía no hay resultados cargados.</p>";
@@ -132,7 +160,10 @@ function renderFixture(partidos) {
     <div class="match-row upcoming">
       <span class="match-date">${fmtFecha(p.fecha)}</span>
       <span class="match-teams">En Fugeira FC vs ${p.rival}</span>
-      <span class="match-cond">${p.condicion}</span>
+      <span class="match-tags">
+        <span class="match-cond">${p.condicion}</span>
+        ${p.torneo ? `<span class="match-torneo">${p.torneo}</span>` : ""}
+      </span>
     </div>
   `).join("") || "<p class='empty'>Sin próximos partidos por ahora.</p>";
 }
@@ -149,7 +180,7 @@ function renderGoleadores(goles) {
       <span class="stat-name">${jugador}</span>
       <span class="stat-value">${cant} ${ICONS.ball}</span>
     </div>
-  `).join("") || "<p class='empty'>Todavía no hay goles cargados.</p>";
+  `).join("") || "<p class='empty'>Todavía no hay goles cargados en este torneo.</p>";
 }
 
 function renderTarjetas(tarjetas) {
@@ -176,12 +207,18 @@ function renderTarjetas(tarjetas) {
         ${c.amarillas >= 3 ? `<span class="suspension-warning">⚠ riesgo de suspensión</span>` : ""}
       </span>
     </div>
-  `).join("") || "<p class='empty'>Todavía no hay tarjetas cargadas.</p>";
+  `).join("") || "<p class='empty'>Todavía no hay tarjetas cargadas en este torneo.</p>";
 }
 
 function renderPosiciones(posiciones) {
   const ordenado = [...posiciones].sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc));
   const cont = document.getElementById("posiciones-table");
+
+  if (!ordenado.length) {
+    cont.innerHTML = "<p class='empty'>Todavía no hay tabla cargada para este torneo.</p>";
+    return;
+  }
+
   const filas = ordenado.map((e, i) => `
     <tr class="${e.equipo.toLowerCase().includes('en fugeira') ? 'highlight' : ''}">
       <td>${i + 1}</td>
@@ -206,6 +243,39 @@ function renderPosiciones(posiciones) {
   `;
 }
 
+function renderTorneoFilter() {
+  const torneos = getTorneosOrdenados(appData);
+  const html = torneos.map(t => `
+    <button class="torneo-pill ${t === torneoActual ? "active" : ""}" data-torneo="${t}">${t}</button>
+  `).join("");
+
+  ["torneo-filter-stats", "torneo-filter-posiciones"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html;
+    el.querySelectorAll(".torneo-pill").forEach(btn => {
+      btn.addEventListener("click", () => setTorneo(btn.dataset.torneo));
+    });
+  });
+}
+
+function renderVistaTorneo() {
+  const goles = appData.goles.filter(g => g.torneo === torneoActual);
+  const tarjetas = appData.tarjetas.filter(t => t.torneo === torneoActual);
+  const posiciones = appData.posiciones.filter(p => p.torneo === torneoActual);
+
+  renderGoleadores(goles);
+  renderTarjetas(tarjetas);
+  renderPosiciones(posiciones);
+  renderRecord(appData);
+}
+
+function setTorneo(torneo) {
+  torneoActual = torneo;
+  renderTorneoFilter();
+  renderVistaTorneo();
+}
+
 function initNav() {
   const toggle = document.getElementById("nav-toggle");
   const links = document.getElementById("nav-links");
@@ -221,14 +291,16 @@ function initNav() {
 
 async function init() {
   initNav();
-  const data = await loadTeamData();
-  renderHero(data);
-  renderRecord(data);
-  renderPlantel(data.jugadores);
-  renderFixture(data.partidos);
-  renderGoleadores(data.goles);
-  renderTarjetas(data.tarjetas);
-  renderPosiciones(data.posiciones);
+  appData = inferirTorneos(await loadTeamData());
+
+  const torneos = getTorneosOrdenados(appData);
+  torneoActual = torneos[torneos.length - 1] || "";
+
+  renderHero(appData);
+  renderPlantel(appData.jugadores);
+  renderFixture(appData.partidos);
+  renderTorneoFilter();
+  renderVistaTorneo();
   document.getElementById("year").textContent = new Date().getFullYear();
 }
 

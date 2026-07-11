@@ -41,6 +41,17 @@ function getTorneosOrdenados(data) {
   return Object.keys(primeraFecha).sort((a, b) => primeraFecha[a].localeCompare(primeraFecha[b]));
 }
 
+// El torneo "actual" es el del último partido JUGADO (no el que arrancó más
+// reciente: un torneo recién programado puede no tener partidos todavía).
+function getTorneoActualPorDefecto(data) {
+  const jugados = data.partidos.filter(p => p.estado === "jugado" && p.torneo);
+  if (jugados.length) {
+    return jugados.sort((a, b) => b.fecha.localeCompare(a.fecha))[0].torneo;
+  }
+  const torneos = getTorneosOrdenados(data);
+  return torneos[torneos.length - 1] || "";
+}
+
 function renderHero(data) {
   const { equipo } = data;
   document.getElementById("team-name").textContent = equipo.nombre;
@@ -63,9 +74,6 @@ function renderHero(data) {
   }
 
   let socialHtml = "";
-  if (equipo.whatsapp) {
-    socialHtml += `<a href="${equipo.whatsapp}" target="_blank" rel="noopener">${ICONS.whatsapp} WhatsApp</a>`;
-  }
   if (equipo.instagram) {
     socialHtml += `<a href="${equipo.instagram}" target="_blank" rel="noopener">${ICONS.instagram} Instagram</a>`;
   }
@@ -75,18 +83,22 @@ function renderHero(data) {
 
 function renderRecord(data) {
   const cont = document.getElementById("team-record");
-  const propio = data.posiciones.find(p =>
-    p.equipo.toLowerCase().includes("en fugeira") && p.torneo === torneoActual
-  );
+  // Histórico: suma de todos los torneos, no del torneo seleccionado en los filtros.
+  const propios = data.posiciones.filter(p => p.equipo.toLowerCase().includes("en fugeira"));
 
   let chipsHtml = "";
-  if (propio) {
+  if (propios.length) {
+    const total = propios.reduce((acc, p) => {
+      acc.pj += p.pj; acc.pg += p.pg; acc.pe += p.pe; acc.pp += p.pp; acc.pts += p.pts;
+      return acc;
+    }, { pj: 0, pg: 0, pe: 0, pp: 0, pts: 0 });
+
     chipsHtml = `
-      <div class="record-chip"><span class="value">${propio.pj}</span><span class="label">PJ</span></div>
-      <div class="record-chip"><span class="value">${propio.pg}</span><span class="label">PG</span></div>
-      <div class="record-chip"><span class="value">${propio.pe}</span><span class="label">PE</span></div>
-      <div class="record-chip"><span class="value">${propio.pp}</span><span class="label">PP</span></div>
-      <div class="record-chip"><span class="value">${propio.pts}</span><span class="label">Pts</span></div>
+      <div class="record-chip"><span class="value">${total.pj}</span><span class="label">PJ</span></div>
+      <div class="record-chip"><span class="value">${total.pg}</span><span class="label">PG</span></div>
+      <div class="record-chip"><span class="value">${total.pe}</span><span class="label">PE</span></div>
+      <div class="record-chip"><span class="value">${total.pp}</span><span class="label">PP</span></div>
+      <div class="record-chip"><span class="value">${total.pts}</span><span class="label">Pts</span></div>
     `;
   }
 
@@ -267,7 +279,6 @@ function renderVistaTorneo() {
   renderGoleadores(goles);
   renderTarjetas(tarjetas);
   renderPosiciones(posiciones);
-  renderRecord(appData);
 }
 
 function setTorneo(torneo) {
@@ -292,11 +303,10 @@ function initNav() {
 async function init() {
   initNav();
   appData = inferirTorneos(await loadTeamData());
-
-  const torneos = getTorneosOrdenados(appData);
-  torneoActual = torneos[torneos.length - 1] || "";
+  torneoActual = getTorneoActualPorDefecto(appData);
 
   renderHero(appData);
+  renderRecord(appData);
   renderPlantel(appData.jugadores);
   renderFixture(appData.partidos);
   renderTorneoFilter();

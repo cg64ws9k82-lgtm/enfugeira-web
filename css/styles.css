@@ -504,6 +504,7 @@ section[id], header[id] { scroll-margin-top: 66px; }
   font-size: 0.9rem;
   flex-wrap: wrap;
   transition: transform 0.15s;
+  cursor: pointer;
 }
 
 .match-row:hover { transform: translateX(2px); }
@@ -1055,6 +1056,54 @@ button:focus-visible,
 
 .modal-torneo-row .nombre { font-weight: 700; flex: 1; }
 .modal-torneo-row .badges { display: flex; gap: 6px; align-items: center; }
+
+/* Modal de partido */
+.modal-match-header { text-align: center; margin-bottom: 24px; }
+.modal-match-header .tag { margin-bottom: 16px; }
+.modal-match-header .match-teams-row { margin-bottom: 12px; }
+
+.modal-match-score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--navy-900);
+  flex-shrink: 0;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 0.88rem;
+}
+
+.timeline-row:last-child { border-bottom: none; }
+.timeline-row.rival { flex-direction: row-reverse; text-align: right; }
+
+.timeline-minute {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--gray-500);
+  min-width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.timeline-player { font-weight: 700; flex: 1; }
+.timeline-row .icon { margin: 0; flex-shrink: 0; stroke: var(--navy-700); }
+.timeline-row.rival .icon { stroke: var(--gray-500); }
+
+.card-badge.small { min-width: 16px; height: 16px; padding: 0; border-radius: 3px; }
+
+.timeline-note {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+  margin: 14px 0 4px;
+}
 
 /* Bottom nav (mobile) */
 .bottom-nav {

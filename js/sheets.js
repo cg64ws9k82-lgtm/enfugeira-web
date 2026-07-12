@@ -59,6 +59,7 @@ async function loadFromGoogleSheets() {
     jugador: r.jugador,
     tipo: r.tipo,
     rival: r.rival,
+    minuto: Number(r.minuto) || null,
     torneo: r.torneo || ""
   }));
 

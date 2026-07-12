@@ -36,6 +36,8 @@ no muestra esa parte.
 
 - `fecha` siempre en formato AAAA-MM-DD
 - `estado` es `proximo` o `jugado` (para partidos jugados, dejá golesFavor/golesContra vacíos hasta tener el resultado)
+- Los cuadraditos de récord (PJ/PG/PE/PP/Pts) de arriba de todo se calculan solos
+  a partir de esta hoja — no hace falta tocar nada más para que se actualicen.
 
 ### Hoja "Goles"
 | fecha | jugador | rival | minuto |
@@ -43,22 +45,38 @@ no muestra esa parte.
 | 2026-06-14 | Gorriarán | Los Pinos FC | 23 |
 
 Una fila por gol. El sitio cuenta automáticamente el ranking de goleadores.
+`minuto` es opcional, pero si lo cargás, ese gol aparece ubicado correctamente
+en la cronología del partido (ver más abajo).
+
+Si querés que también aparezca el gol de un jugador rival en la cronología del
+partido, cargá la fila igual pero con el nombre del jugador rival en `jugador`
+— como ese nombre no está en la hoja de Jugadores, el sitio lo reconoce solo
+como del equipo contrario y lo muestra del otro lado.
 
 ### Hoja "Tarjetas"
-| fecha | jugador | tipo | rival |
-|---|---|---|---|
-| 2026-06-14 | Fernández | Amarilla | Los Pinos FC |
+| fecha | jugador | tipo | rival | minuto |
+|---|---|---|---|---|
+| 2026-06-14 | Fernández | Amarilla | Los Pinos FC | 40 |
 
-Una fila por tarjeta (`Amarilla` o `Roja`). Si un jugador llega a 3 amarillas,
-el sitio le muestra automáticamente un aviso de "riesgo de suspensión".
+Una fila por tarjeta (`Amarilla` o `Roja`). Si un jugador llega a 3 amarillas
+**dentro del mismo torneo**, el sitio le muestra automáticamente un aviso de
+"riesgo de suspensión". `minuto` es opcional, igual que en Goles, y también
+funciona el mismo truco para cargar tarjetas de jugadores rivales.
 
 ### Hoja "Posiciones"
-| equipo | pj | pg | pe | pp | gf | gc | pts |
-|---|---|---|---|---|---|---|---|
-| En Fugeira FC | 3 | 2 | 1 | 0 | 6 | 3 | 7 |
+| equipo | torneo | pj | pg | pe | pp | gf | gc | pts |
+|---|---|---|---|---|---|---|---|---|
+| En Fugeira FC | Torneo Apertura | 3 | 2 | 1 | 0 | 6 | 3 | 7 |
 
-Esta la cargás manualmente con la tabla del torneo (no la calcula el sitio,
-porque incluye a los rivales).
+Esta la cargás manualmente con la tabla completa de cada torneo (no la calcula
+el sitio, porque incluye a los rivales). Necesita la columna `torneo` para
+poder mostrar una tabla separada por cada campeonato.
+
+## Ver el detalle de un partido
+
+Tocando cualquier partido del Fixture se abre un modal con el resultado y la
+cronología de goles y tarjetas ordenada por minuto (los eventos sin minuto
+cargado aparecen al final, agrupados aparte).
 
 ### Hoja "Equipo" (opcional)
 Una sola fila con estos datos generales:

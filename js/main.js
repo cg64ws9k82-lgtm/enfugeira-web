@@ -96,15 +96,20 @@ function renderHero(data) {
 
 function renderRecord(data) {
   const cont = document.getElementById("team-record");
-  // Histórico: suma de todos los torneos, no del torneo seleccionado en los filtros.
-  const propios = data.posiciones.filter(p => p.equipo.toLowerCase().includes("en fugeira"));
+  // Histórico: se calcula directo de los partidos jugados (todos los torneos),
+  // así no depende de que también actualices la hoja de Posiciones a mano.
+  const jugados = data.partidos.filter(p => p.estado === "jugado" && p.golesFavor !== null && p.golesContra !== null);
 
   let chipsHtml = "";
-  if (propios.length) {
-    const total = propios.reduce((acc, p) => {
-      acc.pj += p.pj; acc.pg += p.pg; acc.pe += p.pe; acc.pp += p.pp; acc.pts += p.pts;
+  if (jugados.length) {
+    const total = jugados.reduce((acc, p) => {
+      acc.pj++;
+      if (p.golesFavor > p.golesContra) acc.pg++;
+      else if (p.golesFavor < p.golesContra) acc.pp++;
+      else acc.pe++;
       return acc;
-    }, { pj: 0, pg: 0, pe: 0, pp: 0, pts: 0 });
+    }, { pj: 0, pg: 0, pe: 0, pp: 0 });
+    total.pts = total.pg * 3 + total.pe;
 
     chipsHtml = `
       <div class="record-chip"><span class="value">${total.pj}</span><span class="label">PJ</span></div>
@@ -179,7 +184,7 @@ function renderFixture(partidos) {
     const perdio = p.golesFavor < p.golesContra;
     const claseResultado = gano ? "win" : perdio ? "loss" : "draw";
     return `
-      <div class="match-row ${claseResultado}">
+      <div class="match-row ${claseResultado}" data-fecha="${p.fecha}" data-rival="${p.rival}" tabindex="0" role="button" aria-label="Ver detalle del partido vs ${p.rival}">
         <span class="match-date">${fmtFecha(p.fecha)}</span>
         <span class="match-teams">En Fugeira FC ${p.golesFavor} - ${p.golesContra} ${p.rival}</span>
         <span class="match-tags">
@@ -192,7 +197,7 @@ function renderFixture(partidos) {
 
   const proximosCont = document.getElementById("proximos-list");
   proximosCont.innerHTML = proximos.map(p => `
-    <div class="match-row upcoming">
+    <div class="match-row upcoming" data-fecha="${p.fecha}" data-rival="${p.rival}" tabindex="0" role="button" aria-label="Ver detalle del partido vs ${p.rival}">
       <span class="match-date">${fmtFecha(p.fecha)}</span>
       <span class="match-teams">En Fugeira FC vs ${p.rival}</span>
       <span class="match-tags">
@@ -201,6 +206,18 @@ function renderFixture(partidos) {
       </span>
     </div>
   `).join("") || "<p class='empty'>Sin próximos partidos por ahora.</p>";
+
+  [resultadosCont, proximosCont].forEach(cont => {
+    cont.querySelectorAll(".match-row").forEach(row => {
+      row.addEventListener("click", () => abrirModalPartido(row.dataset.fecha, row.dataset.rival));
+      row.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          abrirModalPartido(row.dataset.fecha, row.dataset.rival);
+        }
+      });
+    });
+  });
 }
 
 function renderGoleadores(goles) {
@@ -380,6 +397,81 @@ function abrirModalJugador(nombre) {
     </div>
   `;
 
+  mostrarModal();
+}
+
+// --- Modal de partido ---
+
+function esJugadorPropio(nombre) {
+  return appData.jugadores.some(j => j.nombre === nombre);
+}
+
+function abrirModalPartido(fecha, rival) {
+  const partido = appData.partidos.find(p => p.fecha === fecha && p.rival === rival);
+  if (!partido) return;
+
+  const golesPartido = appData.goles.filter(g => g.fecha === fecha && g.rival === rival);
+  const tarjetasPartido = appData.tarjetas.filter(t => t.fecha === fecha && t.rival === rival);
+
+  const eventos = [
+    ...golesPartido.map(g => ({ tipo: "gol", jugador: g.jugador, minuto: g.minuto })),
+    ...tarjetasPartido.map(t => ({
+      tipo: t.tipo.toLowerCase().startsWith("roj") ? "roja" : "amarilla",
+      jugador: t.jugador,
+      minuto: t.minuto
+    }))
+  ];
+
+  const conMinuto = eventos.filter(e => e.minuto != null).sort((a, b) => a.minuto - b.minuto);
+  const sinMinuto = eventos.filter(e => e.minuto == null);
+
+  const iconoEvento = e => {
+    if (e.tipo === "gol") return ICONS.ball;
+    return `<span class="card-badge ${e.tipo === "roja" ? "red" : "yellow"} small"></span>`;
+  };
+
+  const filaEvento = e => `
+    <div class="timeline-row ${esJugadorPropio(e.jugador) ? "us" : "rival"}">
+      <span class="timeline-minute">${e.minuto != null ? e.minuto + "'" : "—"}</span>
+      ${iconoEvento(e)}
+      <span class="timeline-player">${e.jugador}</span>
+    </div>
+  `;
+
+  let timelineHtml = "";
+  if (conMinuto.length) timelineHtml += conMinuto.map(filaEvento).join("");
+  if (sinMinuto.length) {
+    timelineHtml += `<p class="timeline-note">Sin minuto cargado</p>` + sinMinuto.map(filaEvento).join("");
+  }
+  if (!eventos.length) {
+    timelineHtml = "<p class='empty'>Todavía no hay goles ni tarjetas cargados para este partido.</p>";
+  }
+
+  const jugado = partido.estado === "jugado";
+  const local = partido.condicion && partido.condicion.toLowerCase() === "local";
+  const nosotrosHtml = `<div class="match-side"><div class="match-badge"><img src="assets/crest.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
+  const rivalHtml = `<div class="match-side"><div class="match-badge rival">${(partido.rival || "?").charAt(0)}</div><span>${partido.rival}</span></div>`;
+
+  document.getElementById("modal-body").innerHTML = `
+    <div class="modal-match-header">
+      ${partido.torneo ? `<span class="tag">${partido.torneo}</span>` : ""}
+      <div class="match-teams-row">
+        ${local ? nosotrosHtml : rivalHtml}
+        ${jugado ? `<div class="modal-match-score">${partido.golesFavor} - ${partido.golesContra}</div>` : `<span class="match-vs">VS</span>`}
+        ${local ? rivalHtml : nosotrosHtml}
+      </div>
+      <p class="next-match-info">${fmtFecha(partido.fecha)} · ${partido.condicion}</p>
+    </div>
+    <div class="modal-torneos">
+      <h4>Cronología</h4>
+      ${timelineHtml}
+    </div>
+  `;
+
+  mostrarModal();
+}
+
+function mostrarModal() {
   const overlay = document.getElementById("player-modal");
   overlay.hidden = false;
   requestAnimationFrame(() => overlay.classList.add("open"));

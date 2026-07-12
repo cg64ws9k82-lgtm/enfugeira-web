@@ -425,13 +425,20 @@ function abrirModalPartido(fecha, rival) {
   const conMinuto = eventos.filter(e => e.minuto != null).sort((a, b) => a.minuto - b.minuto);
   const sinMinuto = eventos.filter(e => e.minuto == null);
 
+  const jugado = partido.estado === "jugado";
+  const local = partido.condicion && partido.condicion.toLowerCase() === "local";
+
+  // El lado de cada evento tiene que coincidir con el lado del escudo arriba:
+  // si jugamos de local, nosotros vamos a la izquierda; de visitante, a la derecha.
+  const vaAIzquierda = jugador => esJugadorPropio(jugador) === local;
+
   const iconoEvento = e => {
     if (e.tipo === "gol") return ICONS.ball;
     return `<span class="card-badge ${e.tipo === "roja" ? "red" : "yellow"} small"></span>`;
   };
 
   const filaEvento = e => `
-    <div class="timeline-row ${esJugadorPropio(e.jugador) ? "us" : "rival"}">
+    <div class="timeline-row ${vaAIzquierda(e.jugador) ? "left" : "right"}">
       <span class="timeline-minute">${e.minuto != null ? e.minuto + "'" : "—"}</span>
       ${iconoEvento(e)}
       <span class="timeline-player">${e.jugador}</span>
@@ -447,8 +454,6 @@ function abrirModalPartido(fecha, rival) {
     timelineHtml = "<p class='empty'>Todavía no hay goles ni tarjetas cargados para este partido.</p>";
   }
 
-  const jugado = partido.estado === "jugado";
-  const local = partido.condicion && partido.condicion.toLowerCase() === "local";
   const nosotrosHtml = `<div class="match-side"><div class="match-badge"><img src="assets/crest.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
   const rivalHtml = `<div class="match-side"><div class="match-badge rival">${(partido.rival || "?").charAt(0)}</div><span>${partido.rival}</span></div>`;
 
@@ -457,7 +462,7 @@ function abrirModalPartido(fecha, rival) {
       ${partido.torneo ? `<span class="tag">${partido.torneo}</span>` : ""}
       <div class="match-teams-row">
         ${local ? nosotrosHtml : rivalHtml}
-        ${jugado ? `<div class="modal-match-score">${partido.golesFavor} - ${partido.golesContra}</div>` : `<span class="match-vs">VS</span>`}
+        ${jugado ? `<div class="modal-match-score">${local ? partido.golesFavor : partido.golesContra} - ${local ? partido.golesContra : partido.golesFavor}</div>` : `<span class="match-vs">VS</span>`}
         ${local ? rivalHtml : nosotrosHtml}
       </div>
       <p class="next-match-info">${fmtFecha(partido.fecha)} · ${partido.condicion}</p>

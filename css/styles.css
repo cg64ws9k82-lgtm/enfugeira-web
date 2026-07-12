@@ -1080,7 +1080,7 @@ button:focus-visible,
 }
 
 .timeline-row:last-child { border-bottom: none; }
-.timeline-row.rival { flex-direction: row-reverse; text-align: right; }
+.timeline-row.right { flex-direction: row-reverse; text-align: right; }
 
 .timeline-minute {
   font-family: var(--font-display);
@@ -1093,7 +1093,7 @@ button:focus-visible,
 
 .timeline-player { font-weight: 700; flex: 1; }
 .timeline-row .icon { margin: 0; flex-shrink: 0; stroke: var(--navy-700); }
-.timeline-row.rival .icon { stroke: var(--gray-500); }
+.timeline-row.right .icon { stroke: var(--gray-500); }
 
 .card-badge.small { min-width: 16px; height: 16px; padding: 0; border-radius: 3px; }
 

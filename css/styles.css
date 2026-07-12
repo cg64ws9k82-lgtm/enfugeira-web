@@ -678,6 +678,23 @@ section[id], header[id] { scroll-margin-top: 66px; }
 #posiciones-table tr.highlight td:nth-child(2) { color: var(--navy-700); font-weight: 800; }
 
 /* Galeria */
+.gallery-torneo { margin-bottom: 44px; }
+.gallery-torneo:last-child { margin-bottom: 0; }
+
+.gallery-torneo-title {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--navy-900);
+  background: var(--sky-100);
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin: 0 0 20px;
+}
+
 .gallery-group { margin-bottom: 34px; }
 .gallery-group:last-child { margin-bottom: 0; }
 

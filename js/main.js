@@ -494,6 +494,16 @@ async function cargarGaleria() {
   }
 }
 
+// Número de fecha (jornada) de un partido: su posición cronológica entre
+// todos los partidos cargados de ese mismo torneo.
+function calcularJornada(torneo, fecha) {
+  const delTorneo = appData.partidos
+    .filter(p => p.torneo === torneo)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const idx = delTorneo.findIndex(p => p.fecha === fecha);
+  return idx === -1 ? null : idx + 1;
+}
+
 function renderGaleria(fotos) {
   const cont = document.getElementById("gallery-content");
 
@@ -502,27 +512,52 @@ function renderGaleria(fotos) {
     return;
   }
 
-  const porFecha = {};
+  // Agrupar fotos por partido (fecha + rival)
+  const porPartido = {};
   fotos.forEach(f => {
-    if (!porFecha[f.fecha]) porFecha[f.fecha] = [];
-    porFecha[f.fecha].push(f);
+    const key = `${f.fecha}__${f.rival || ""}`;
+    if (!porPartido[key]) porPartido[key] = { fecha: f.fecha, rival: f.rival || "", fotos: [] };
+    porPartido[key].fotos.push(f);
   });
 
-  const fechas = Object.keys(porFecha).sort((a, b) => b.localeCompare(a));
+  const grupos = Object.values(porPartido).map(g => {
+    const partido = appData.partidos.find(p => p.fecha === g.fecha && p.rival === g.rival);
+    const torneo = partido ? partido.torneo : "Otros partidos";
+    const jornada = partido ? calcularJornada(torneo, g.fecha) : null;
+    return { ...g, torneo, jornada };
+  });
 
-  cont.innerHTML = fechas.map(fecha => {
-    const items = porFecha[fecha];
-    const rival = items[0].rival;
-    const titulo = rival ? `${fmtFecha(fecha)} · vs ${rival}` : fmtFecha(fecha);
-    return `
-      <div class="gallery-group">
-        <p class="gallery-date">${titulo}</p>
-        <div class="gallery-grid">
-          ${items.map(f => `<img src="${f.src}" alt="Foto ${titulo}" loading="lazy">`).join("")}
+  // Agrupar esos partidos por torneo, con el torneo más reciente primero
+  const torneosOrden = [...getTorneosOrdenados(appData)].reverse();
+  torneosOrden.push("Otros partidos");
+
+  const porTorneo = {};
+  grupos.forEach(g => {
+    if (!porTorneo[g.torneo]) porTorneo[g.torneo] = [];
+    porTorneo[g.torneo].push(g);
+  });
+
+  cont.innerHTML = torneosOrden
+    .filter(t => porTorneo[t] && porTorneo[t].length)
+    .map(torneo => {
+      const partidos = porTorneo[torneo].sort((a, b) => b.fecha.localeCompare(a.fecha));
+      return `
+        <div class="gallery-torneo">
+          <p class="gallery-torneo-title">${torneo}</p>
+          ${partidos.map(g => {
+            const titulo = g.jornada ? `Fecha ${g.jornada} - ${g.rival}` : (g.rival || fmtFecha(g.fecha));
+            return `
+              <div class="gallery-group">
+                <p class="gallery-date">${titulo}</p>
+                <div class="gallery-grid">
+                  ${g.fotos.map(f => `<img src="${f.src}" alt="Foto ${titulo}" loading="lazy">`).join("")}
+                </div>
+              </div>
+            `;
+          }).join("")}
         </div>
-      </div>
-    `;
-  }).join("");
+      `;
+    }).join("");
 
   cont.querySelectorAll(".gallery-grid img").forEach(img => {
     img.addEventListener("click", () => abrirLightbox(img.src, img.alt));

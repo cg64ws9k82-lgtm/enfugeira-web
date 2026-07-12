@@ -483,12 +483,24 @@ function mostrarModal() {
   document.body.style.overflow = "hidden";
 }
 
-// --- Galería, agrupada por fecha ---
+// --- Galería: álbumes por fecha, agrupados en pestañas por torneo ---
+
+let galeriaAlbumes = [];
+let torneoGaleriaActual = null;
 
 async function cargarGaleria() {
   try {
     const res = await fetch("data/galeria.json", { cache: "no-store" });
-    renderGaleria(await res.json());
+    const fotos = await res.json();
+    galeriaAlbumes = armarAlbumes(fotos);
+
+    const conFotos = [...new Set(galeriaAlbumes.map(a => a.torneo))];
+    const torneosOrden = [...getTorneosOrdenados(appData)].reverse().filter(t => conFotos.includes(t));
+    if (conFotos.includes("Otros partidos")) torneosOrden.push("Otros partidos");
+
+    torneoGaleriaActual = torneosOrden[0] || null;
+    renderGaleriaTorneoFilter(torneosOrden);
+    renderAlbumGrid();
   } catch (err) {
     console.error("No se pudo cargar la galería.", err);
   }
@@ -504,15 +516,7 @@ function calcularJornada(torneo, fecha) {
   return idx === -1 ? null : idx + 1;
 }
 
-function renderGaleria(fotos) {
-  const cont = document.getElementById("gallery-content");
-
-  if (!fotos.length) {
-    cont.innerHTML = "<p class='empty'>Pronto vamos a subir fotos de los partidos acá.</p>";
-    return;
-  }
-
-  // Agrupar fotos por partido (fecha + rival)
+function armarAlbumes(fotos) {
   const porPartido = {};
   fotos.forEach(f => {
     const key = `${f.fecha}__${f.rival || ""}`;
@@ -520,54 +524,104 @@ function renderGaleria(fotos) {
     porPartido[key].fotos.push(f);
   });
 
-  const grupos = Object.values(porPartido).map(g => {
+  return Object.values(porPartido).map(g => {
     const partido = appData.partidos.find(p => p.fecha === g.fecha && p.rival === g.rival);
     const torneo = partido ? partido.torneo : "Otros partidos";
     const jornada = partido ? calcularJornada(torneo, g.fecha) : null;
-    return { ...g, torneo, jornada };
-  });
+    const titulo = jornada ? `Fecha ${jornada} - ${g.rival}` : (g.rival || fmtFecha(g.fecha));
+    return { ...g, torneo, jornada, titulo };
+  }).sort((a, b) => b.fecha.localeCompare(a.fecha));
+}
 
-  // Agrupar esos partidos por torneo, con el torneo más reciente primero
-  const torneosOrden = [...getTorneosOrdenados(appData)].reverse();
-  torneosOrden.push("Otros partidos");
+function renderGaleriaTorneoFilter(torneos) {
+  const el = document.getElementById("torneo-filter-galeria");
+  if (!el) return;
 
-  const porTorneo = {};
-  grupos.forEach(g => {
-    if (!porTorneo[g.torneo]) porTorneo[g.torneo] = [];
-    porTorneo[g.torneo].push(g);
-  });
+  if (!torneos.length) {
+    el.innerHTML = "";
+    return;
+  }
 
-  cont.innerHTML = torneosOrden
-    .filter(t => porTorneo[t] && porTorneo[t].length)
-    .map(torneo => {
-      const partidos = porTorneo[torneo].sort((a, b) => b.fecha.localeCompare(a.fecha));
-      return `
-        <div class="gallery-torneo">
-          <p class="gallery-torneo-title">${torneo}</p>
-          ${partidos.map(g => {
-            const titulo = g.jornada ? `Fecha ${g.jornada} - ${g.rival}` : (g.rival || fmtFecha(g.fecha));
-            return `
-              <div class="gallery-group">
-                <p class="gallery-date">${titulo}</p>
-                <div class="gallery-grid">
-                  ${g.fotos.map(f => `<img src="${f.src}" alt="Foto ${titulo}" loading="lazy">`).join("")}
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      `;
-    }).join("");
+  el.innerHTML = torneos.map(t => `
+    <button class="torneo-pill ${t === torneoGaleriaActual ? "active" : ""}" data-torneo="${t}">${t}</button>
+  `).join("");
 
-  cont.querySelectorAll(".gallery-grid img").forEach(img => {
-    img.addEventListener("click", () => abrirLightbox(img.src, img.alt));
+  el.querySelectorAll(".torneo-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      torneoGaleriaActual = btn.dataset.torneo;
+      el.querySelectorAll(".torneo-pill").forEach(b => b.classList.toggle("active", b === btn));
+      renderAlbumGrid();
+    });
   });
 }
 
-function abrirLightbox(src, alt) {
-  document.getElementById("modal-body").innerHTML = `<div class="lightbox"><img src="${src}" alt="${alt}"></div>`;
+function renderAlbumGrid() {
+  const cont = document.getElementById("gallery-content");
+
+  if (!galeriaAlbumes.length) {
+    cont.innerHTML = "<p class='empty'>Pronto vamos a subir fotos de los partidos acá.</p>";
+    return;
+  }
+
+  const albumes = galeriaAlbumes.filter(a => a.torneo === torneoGaleriaActual);
+
+  cont.innerHTML = `
+    <div class="album-grid">
+      ${albumes.map((a, i) => `
+        <div class="album-card" data-index="${i}">
+          <div class="album-cover">
+            <img src="${a.fotos[0].src}" alt="${a.titulo}" loading="lazy">
+            <span class="album-count">${a.fotos.length} 🖼</span>
+          </div>
+          <p class="album-title">${a.titulo}</p>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  cont.querySelectorAll(".album-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const album = albumes[Number(card.dataset.index)];
+      abrirAlbum(album.fotos, 0, album.titulo);
+    });
+  });
+}
+
+let albumFotos = [];
+let albumIndice = 0;
+let albumTitulo = "";
+
+function abrirAlbum(fotos, indiceInicial, titulo) {
+  albumFotos = fotos;
+  albumIndice = indiceInicial;
+  albumTitulo = titulo;
+  renderFotoAlbum();
   mostrarModal();
   document.querySelector(".modal-card").classList.add("modal-card--photo");
+}
+
+function renderFotoAlbum() {
+  const foto = albumFotos[albumIndice];
+  const hayVarias = albumFotos.length > 1;
+  document.getElementById("modal-body").innerHTML = `
+    <div class="lightbox">
+      <img src="${foto.src}" alt="${albumTitulo}">
+      ${hayVarias ? `
+        <button class="lightbox-arrow prev" id="lightbox-prev" aria-label="Foto anterior">&#8249;</button>
+        <button class="lightbox-arrow next" id="lightbox-next" aria-label="Foto siguiente">&#8250;</button>
+        <span class="lightbox-counter">${albumIndice + 1} / ${albumFotos.length}</span>
+      ` : ""}
+    </div>
+  `;
+  if (hayVarias) {
+    document.getElementById("lightbox-prev").addEventListener("click", () => cambiarFotoAlbum(-1));
+    document.getElementById("lightbox-next").addEventListener("click", () => cambiarFotoAlbum(1));
+  }
+}
+
+function cambiarFotoAlbum(delta) {
+  albumIndice = (albumIndice + delta + albumFotos.length) % albumFotos.length;
+  renderFotoAlbum();
 }
 
 function cerrarModal() {
@@ -584,7 +638,10 @@ function initModal() {
   document.getElementById("modal-close").addEventListener("click", cerrarModal);
   overlay.addEventListener("click", e => { if (e.target === overlay) cerrarModal(); });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && !overlay.hidden) cerrarModal();
+    if (overlay.hidden) return;
+    if (e.key === "Escape") cerrarModal();
+    if (e.key === "ArrowLeft" && albumFotos.length > 1) cambiarFotoAlbum(-1);
+    if (e.key === "ArrowRight" && albumFotos.length > 1) cambiarFotoAlbum(1);
   });
 }
 

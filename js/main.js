@@ -91,7 +91,6 @@ function renderHero(data) {
     socialHtml += `<a href="${equipo.instagram}" target="_blank" rel="noopener">${ICONS.instagram} Instagram</a>`;
   }
   document.getElementById("social-links").innerHTML = socialHtml;
-  document.getElementById("social-links-footer").innerHTML = socialHtml;
 }
 
 function renderRecord(data) {
@@ -478,9 +477,62 @@ function abrirModalPartido(fecha, rival) {
 
 function mostrarModal() {
   const overlay = document.getElementById("player-modal");
+  document.querySelector(".modal-card").className = "modal-card";
   overlay.hidden = false;
   requestAnimationFrame(() => overlay.classList.add("open"));
   document.body.style.overflow = "hidden";
+}
+
+// --- Galería, agrupada por fecha ---
+
+async function cargarGaleria() {
+  try {
+    const res = await fetch("data/galeria.json", { cache: "no-store" });
+    renderGaleria(await res.json());
+  } catch (err) {
+    console.error("No se pudo cargar la galería.", err);
+  }
+}
+
+function renderGaleria(fotos) {
+  const cont = document.getElementById("gallery-content");
+
+  if (!fotos.length) {
+    cont.innerHTML = "<p class='empty'>Pronto vamos a subir fotos de los partidos acá.</p>";
+    return;
+  }
+
+  const porFecha = {};
+  fotos.forEach(f => {
+    if (!porFecha[f.fecha]) porFecha[f.fecha] = [];
+    porFecha[f.fecha].push(f);
+  });
+
+  const fechas = Object.keys(porFecha).sort((a, b) => b.localeCompare(a));
+
+  cont.innerHTML = fechas.map(fecha => {
+    const items = porFecha[fecha];
+    const rival = items[0].rival;
+    const titulo = rival ? `${fmtFecha(fecha)} · vs ${rival}` : fmtFecha(fecha);
+    return `
+      <div class="gallery-group">
+        <p class="gallery-date">${titulo}</p>
+        <div class="gallery-grid">
+          ${items.map(f => `<img src="${f.src}" alt="Foto ${titulo}" loading="lazy">`).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  cont.querySelectorAll(".gallery-grid img").forEach(img => {
+    img.addEventListener("click", () => abrirLightbox(img.src, img.alt));
+  });
+}
+
+function abrirLightbox(src, alt) {
+  document.getElementById("modal-body").innerHTML = `<div class="lightbox"><img src="${src}" alt="${alt}"></div>`;
+  mostrarModal();
+  document.querySelector(".modal-card").classList.add("modal-card--photo");
 }
 
 function cerrarModal() {
@@ -560,6 +612,7 @@ async function init() {
   renderFixture(appData.partidos);
   renderTorneoFilter();
   renderVistaTorneo();
+  cargarGaleria();
   document.getElementById("year").textContent = new Date().getFullYear();
 
   initReveal();

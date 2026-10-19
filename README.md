@@ -121,6 +121,42 @@ Guardá, refrescá el sitio y ya debería mostrar tus datos reales. Mientras
 **Importante:** cualquiera con el link puede leer una hoja "publicada en la
 web". No pongas ahí información sensible — solo estadísticas del equipo.
 
+## Fotos de los partidos (Google Drive)
+
+La galería lee las fotos de la carpeta compartida **"Fotos En Fugeira"** de
+Google Drive. No hace falta tocar código ni la planilla.
+
+### Subir fotos de un partido nuevo (desde el celular)
+
+1. Abrí la app de Google Drive → carpeta **Fotos En Fugeira**
+2. Tocá **+** → **Carpeta** y ponele de nombre la fecha y el rival:
+   `2026-07-12 La Costa` (fecha en formato AAAA-MM-DD, después un espacio y el rival)
+3. Entrá a la carpeta → **+** → **Subir** → elegí las fotos
+4. Listo: en unos minutos aparece el álbum en el sitio
+
+Si la fecha coincide con un partido de la hoja "Partidos", el álbum va solo a
+la pestaña del torneo correcto con el título "Fecha N - Rival". Si no (por
+ejemplo un amistoso que no está en la planilla), aparece en "Otros partidos".
+Para borrar una foto, borrala de la carpeta.
+
+Para que alguien pueda subir fotos, compartile la carpeta "Fotos En Fugeira"
+con su mail como **Editor**. La carpeta tiene que estar compartida como
+"Cualquier persona con el enlace → Lector" para que el sitio pueda mostrarlas.
+
+### Configuración (se hace una sola vez)
+
+En [js/config.js](js/config.js) van dos datos:
+
+- `DRIVE_CARPETA_FOTOS`: el link de la carpeta "Fotos En Fugeira"
+- `DRIVE_API_KEY`: una clave de Google Cloud con la **Google Drive API**
+  activada, restringida a los sitios `https://enfugeira-web.netlify.app/*` y
+  `http://localhost:8080/*`, y solo a la API de Drive. No es secreta (se ve en
+  el sitio), por eso va restringida.
+
+Las fotos viejas que están en `assets/galeria/` (listadas en
+[data/galeria.json](data/galeria.json)) siguen apareciendo y se juntan con las
+de Drive en el mismo álbum si son del mismo partido.
+
 ## 4. Escudo y foto de la camiseta
 
 Por ahora [assets/crest.svg](assets/crest.svg) es un placeholder generado con

@@ -306,22 +306,26 @@ function renderPlantel(jugadores) {
   const otros = jugadores.filter(j => !POSICION_ORDEN.includes(j.posicion));
   if (otros.length) grupos.push({ pos: "Otros", jugadores: otros.sort((a, b) => a.numero - b.numero) });
 
+  const golesPorJugador = {};
+  appData.goles.forEach(g => { golesPorJugador[g.jugador] = (golesPorJugador[g.jugador] || 0) + 1; });
+
   cont.innerHTML = grupos.map(g => `
     <div class="position-group">
       <p class="position-title">${POSICION_PLURAL[g.pos] || g.pos} <small>${g.jugadores.length}</small></p>
       <div class="plantel-grid">
         ${g.jugadores.map(j => `
           <div class="player-card" data-jugador="${escapeHtml(j.nombre)}" aria-label="Ver estadísticas de ${escapeHtml(j.nombre)}">
+            <p class="player-number">${j.numero || ""}</p>
             <div class="player-photo">
               ${j.foto
-                ? `<img src="${j.foto}" alt="${escapeHtml(j.nombre)}" loading="lazy">`
+                ? `<img src="${j.foto}" alt="" loading="lazy">`
                 : `<span class="player-initial">${escapeHtml(j.nombre.charAt(0))}</span>`}
             </div>
-            ${j.numero ? `<p class="player-number">${j.numero}</p>` : ""}
             <div class="player-info">
               <p class="player-name">${escapeHtml(j.nombre)}</p>
               <p class="player-position">${escapeHtml(j.posicion || "")}</p>
             </div>
+            ${golesPorJugador[j.nombre] ? `<p class="player-goals" title="Goles">${ICONS.ball} ${golesPorJugador[j.nombre]}</p>` : ""}
           </div>
         `).join("")}
       </div>
@@ -763,9 +767,17 @@ let torneoGaleriaActual = null;
 
 async function cargarGaleria() {
   try {
-    const res = await fetch("data/galeria.json", { cache: "no-store" });
-    const fotos = await res.json();
-    galeriaAlbumes = armarAlbumes(fotos);
+    const [locales, deDrive] = await Promise.all([
+      fetch("data/galeria.json", { cache: "no-store" }).then(r => r.json()).catch(err => {
+        console.error("No se pudo leer data/galeria.json.", err);
+        return [];
+      }),
+      loadFotosDrive().catch(err => {
+        console.error("No se pudieron leer las fotos de Google Drive.", err);
+        return [];
+      })
+    ]);
+    galeriaAlbumes = armarAlbumes([...locales, ...deDrive]);
 
     const conFotos = [...new Set(galeriaAlbumes.map(a => a.torneo))];
     const torneosOrden = [...getTorneosOrdenados(appData)].reverse().filter(t => conFotos.includes(t));
@@ -789,16 +801,29 @@ function calcularJornada(torneo, fecha) {
   return idx === -1 ? null : idx + 1;
 }
 
+function normalizarNombre(texto) {
+  return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+// Partido al que corresponde una foto: mismo día y mismo rival (sin importar
+// mayúsculas ni tildes); si ese día se jugó un solo partido, alcanza con la fecha.
+function buscarPartidoDeFoto(f) {
+  const delDia = appData.partidos.filter(p => p.fecha === f.fecha);
+  return delDia.find(p => normalizarNombre(p.rival) === normalizarNombre(f.rival))
+    || (delDia.length === 1 ? delDia[0] : null);
+}
+
 function armarAlbumes(fotos) {
   const porPartido = {};
   fotos.forEach(f => {
-    const key = `${f.fecha}__${f.rival || ""}`;
-    if (!porPartido[key]) porPartido[key] = { fecha: f.fecha, rival: f.rival || "", fotos: [] };
+    const partido = buscarPartidoDeFoto(f);
+    const rival = partido ? partido.rival : (f.rival || "");
+    const key = `${f.fecha}__${rival}`;
+    if (!porPartido[key]) porPartido[key] = { fecha: f.fecha, rival, partido, fotos: [] };
     porPartido[key].fotos.push(f);
   });
 
-  return Object.values(porPartido).map(g => {
-    const partido = appData.partidos.find(p => p.fecha === g.fecha && p.rival === g.rival);
+  return Object.values(porPartido).map(({ partido, ...g }) => {
     const torneo = partido ? partido.torneo : "Otros partidos";
     const jornada = partido ? calcularJornada(torneo, g.fecha) : null;
     const titulo = jornada ? `Fecha ${jornada} - ${g.rival}` : (g.rival || fmtFecha(g.fecha));
@@ -843,7 +868,7 @@ function renderAlbumGrid() {
       ${albumes.map((a, i) => `
         <div class="album-card" data-index="${i}" aria-label="Ver fotos: ${escapeHtml(a.titulo)}">
           <div class="album-cover">
-            <img src="${a.fotos[0].src}" alt="" loading="lazy">
+            <img src="${a.fotos[0].thumb || a.fotos[0].src}" alt="" loading="lazy" referrerpolicy="no-referrer">
             <span class="album-count">${ICONS.photo} ${a.fotos.length}</span>
           </div>
           <div class="album-info">
@@ -881,7 +906,7 @@ function renderFotoAlbum() {
   const hayVarias = albumFotos.length > 1;
   document.getElementById("modal-body").innerHTML = `
     <div class="lightbox">
-      <img src="${foto.src}" alt="${albumTitulo}">
+      <img src="${foto.src}" alt="${albumTitulo}" referrerpolicy="no-referrer">
       ${hayVarias ? `
         <button class="lightbox-arrow prev" id="lightbox-prev" aria-label="Foto anterior">&#8249;</button>
         <button class="lightbox-arrow next" id="lightbox-next" aria-label="Foto siguiente">&#8250;</button>

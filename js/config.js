@@ -11,6 +11,13 @@ const SHEETS_CONFIG = {
   equipo: `${SHEET_BASE}?gid=2067035770&single=true&output=csv`
 };
 
+// Galería desde Google Drive (ver README, sección "Fotos de los partidos").
+// DRIVE_CARPETA_FOTOS: link de la carpeta "Fotos En Fugeira".
+// DRIVE_API_KEY: clave de Google Cloud, restringida a este sitio.
+// Si alguna queda vacía, la galería muestra solo las fotos de data/galeria.json.
+const DRIVE_CARPETA_FOTOS = "https://drive.google.com/drive/folders/1jKOtnkzpwJ3bpyQK1BmzjF-L0DkWCx6f";
+const DRIVE_API_KEY = "AIzaSyAlMLSiGjNOp1kZMNN-dxhaQzSX6Lo_Yhw";
+
 // Fotos que van rotando de fondo en la portada (en este orden).
 // Para cambiarlas, poné acá la ruta de cualquier foto de assets/.
 const HERO_FOTOS = [

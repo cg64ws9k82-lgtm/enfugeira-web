@@ -621,28 +621,45 @@ section[id], header[id] { scroll-margin-top: var(--nav-h); }
 
 .plantel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
 }
 
+/* Fila compacta: número, foto chica redonda, nombre y goles */
 .player-card {
-  position: relative;
-  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 12px;
   border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--surface-2);
-  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border: 1px solid var(--line);
   cursor: pointer;
-  isolation: isolate;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 
-.player-card:hover { border-color: var(--sky); }
+.player-card:hover { border-color: var(--sky); background: var(--surface-2); }
+
+.player-number {
+  margin: 0;
+  width: 30px;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1;
+  text-align: center;
+  color: var(--sky);
+}
 
 .player-photo {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -653,68 +670,51 @@ section[id], header[id] { scroll-margin-top: var(--nav-h); }
   height: 100%;
   object-fit: cover;
   object-position: 50% 25%;
-  transition: transform 0.4s ease;
 }
-
-.player-card:hover .player-photo img { transform: scale(1.04); }
 
 .player-photo .player-initial {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 5rem;
-  color: var(--surface-3);
+  font-size: 1.4rem;
+  color: var(--muted);
 }
 
-/* Franja oscura abajo para que se lea el nombre sobre la foto */
-.player-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, rgba(10,18,38,0) 50%, rgba(10,18,38,0.92) 100%);
-}
-
-.player-number {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  margin: 0;
-  min-width: 36px;
-  padding: 4px 7px 3px;
-  border-radius: 4px;
-  background: rgba(10, 18, 38, 0.85);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3rem;
-  line-height: 1;
-  text-align: center;
-}
-
-.player-info {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 12px 14px 14px;
-}
+.player-info { flex: 1; min-width: 0; }
 
 .player-name {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3rem;
-  line-height: 1.05;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.1;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-position {
-  margin: 3px 0 0;
-  font-size: 0.72rem;
+  margin: 2px 0 0;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--sky-soft);
+  letter-spacing: 1px;
+  color: var(--muted);
 }
+
+.player-goals {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.player-goals .icon { width: 15px; height: 15px; color: var(--muted); }
 
 /* ---------- Fixture ---------- */
 .fixture-columns {
@@ -1639,11 +1639,7 @@ button:focus-visible,
   section { padding: 60px 0; }
   .section-head { margin-bottom: 26px; }
 
-  .plantel-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .player-name { font-size: 1.12rem; }
-  .player-position { font-size: 0.64rem; letter-spacing: 0.8px; }
-  .player-info { padding: 10px 11px 12px; }
-  .player-number { font-size: 1.1rem; min-width: 32px; top: 8px; left: 8px; }
+  .plantel-grid { grid-template-columns: 1fr; gap: 8px; }
 
   .stats-columns { grid-template-columns: 1fr; }
   .stats-panel { padding: 16px 12px; }

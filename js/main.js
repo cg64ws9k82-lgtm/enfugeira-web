@@ -1,7 +1,10 @@
 const ICONS = {
   whatsapp: `<svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20Zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.6.1a6.6 6.6 0 0 1-1.9-1.2 7.2 7.2 0 0 1-1.3-1.7c-.1-.2 0-.4.1-.5s.2-.3.4-.4a1.6 1.6 0 0 0 .2-.4.4.4 0 0 0 0-.4c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8s1.7 2.7 4.2 3.7a5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c-.1-.1-.2-.2-.5-.3Z"/></svg>`,
   instagram: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>`,
-  ball: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg>`
+  ball: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg>`,
+  calendar: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 2v3M17 2v3M3.5 9h17M4 5h16a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg>`,
+  share: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>`,
+  photo: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 8"/></svg>`
 };
 
 const POSICION_ORDEN = ["Arquero", "Defensor", "Mediocampista", "Delantero"];
@@ -14,6 +17,8 @@ const POSICION_PLURAL = {
 
 let appData = null;
 let torneoActual = null;
+// Filtro de Estadísticas: un torneo o "temporada:AAAA" para el año completo
+let filtroStats = "";
 
 function fmtFecha(iso) {
   if (!iso) return "";
@@ -58,39 +63,198 @@ function getTorneoActualPorDefecto(data) {
   return torneos[torneos.length - 1] || "";
 }
 
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
+function parseFecha(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// "14 jun" en dos partes, para el bloque de fecha de cada partido
+function fechaCorta(iso) {
+  const f = parseFecha(iso);
+  return { dia: f.getDate(), mes: MESES[f.getMonth()] };
+}
+
+function fechaLarga(iso) {
+  const f = parseFecha(iso);
+  return `${DIAS[f.getDay()]} ${f.getDate()} ${MESES[f.getMonth()]}`;
+}
+
+function textoCuentaRegresiva(iso) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const dias = Math.round((parseFecha(iso) - hoy) / 86400000);
+  if (dias <= 0) return "Hoy";
+  if (dias === 1) return "Mañana";
+  return `Faltan ${dias} días`;
+}
+
+function resultadoClase(p) {
+  if (p.golesFavor > p.golesContra) return "win";
+  if (p.golesFavor < p.golesContra) return "loss";
+  return "draw";
+}
+
+const RESULTADO_LETRA = { win: "G", draw: "E", loss: "P" };
+const RESULTADO_TEXTO = { win: "Victoria", draw: "Empate", loss: "Derrota" };
+
+// Escudos enfrentados respetando local/visitante; "centro" va entre los dos
+// (el VS o el marcador).
+function equiposEnfrentados(partido, centro) {
+  const local = partido.condicion && partido.condicion.toLowerCase() === "local";
+  const nosotros = `<div class="match-side"><div class="match-badge"><img src="assets/crest-shield.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
+  const rival = `<div class="match-side"><div class="match-badge rival">${escapeHtml((partido.rival || "?").charAt(0))}</div><span>${escapeHtml(partido.rival || "")}</span></div>`;
+  return `
+    <div class="match-teams-row">
+      ${local ? nosotros : rival}
+      ${centro}
+      ${local ? rival : nosotros}
+    </div>
+  `;
+}
+
+function hacerClickeable(el, accion) {
+  el.tabIndex = 0;
+  el.setAttribute("role", "button");
+  el.addEventListener("click", accion);
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      accion();
+    }
+  });
+}
+
+// Fondo de la portada: va rotando las fotos de HERO_FOTOS (config.js)
+function initHeroCarrusel() {
+  const cont = document.getElementById("hero-media");
+  const fotos = typeof HERO_FOTOS !== "undefined" ? HERO_FOTOS : [];
+  if (!cont || !fotos.length) return;
+
+  cont.innerHTML = fotos.map((src, i) =>
+    `<img src="${src}" alt="" ${i === 0 ? 'class="is-active" fetchpriority="high"' : 'loading="lazy"'}>`
+  ).join("");
+  if (fotos.length < 2) return;
+
+  const imgs = cont.querySelectorAll("img");
+  const dots = document.createElement("div");
+  dots.className = "hero-dots";
+  dots.innerHTML = fotos.map((_, i) =>
+    `<button class="${i === 0 ? "is-active" : ""}" aria-label="Ver foto ${i + 1}"></button>`
+  ).join("");
+  cont.parentElement.appendChild(dots);
+  const botones = dots.querySelectorAll("button");
+
+  let actual = 0;
+  let timer;
+  const mostrar = i => {
+    imgs[actual].classList.remove("is-active");
+    botones[actual].classList.remove("is-active");
+    actual = (i + imgs.length) % imgs.length;
+    // Las fotos que no son la primera cargan "lazy": las forzamos al mostrarlas
+    imgs[actual].loading = "eager";
+    imgs[actual].classList.add("is-active");
+    botones[actual].classList.add("is-active");
+  };
+  const arrancar = () => {
+    clearInterval(timer);
+    timer = setInterval(() => mostrar(actual + 1), 6000);
+  };
+
+  botones.forEach((b, i) => b.addEventListener("click", () => { mostrar(i); arrancar(); }));
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) arrancar();
+}
+
 function renderHero(data) {
   const { equipo } = data;
-  document.getElementById("team-name").textContent = equipo.nombre;
+  const nombre = equipo.nombre || "En Fugeira FC";
+  const nombreSinFc = nombre.replace(/\s+FC$/i, "");
+  document.getElementById("team-name").innerHTML =
+    nombreSinFc !== nombre ? `${escapeHtml(nombreSinFc)} <span>Fútbol Club</span>` : escapeHtml(nombre);
   document.getElementById("team-meta").textContent =
-    `Fundado en ${equipo.fundacion} · ${equipo.torneo}`;
+    [equipo.fundacion && `Desde ${equipo.fundacion}`, equipo.torneo].filter(Boolean).join(" · ");
 
+  renderProximoPartido(data);
+  renderUltimoResultado(data);
+
+  let accionesHtml = "";
+  if (equipo.instagram) {
+    accionesHtml += `<a class="btn btn-primary" href="${equipo.instagram}" target="_blank" rel="noopener">${ICONS.instagram} Instagram</a>`;
+  }
+  accionesHtml += `<a class="btn btn-ghost" href="#fixture">Ver fixture</a>`;
+  document.getElementById("social-links").innerHTML = accionesHtml;
+}
+
+function renderProximoPartido(data) {
+  const box = document.getElementById("next-match");
   const proximo = data.partidos
     .filter(p => p.estado === "proximo")
     .sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
 
-  const box = document.getElementById("next-match");
-  if (proximo) {
-    const local = proximo.condicion && proximo.condicion.toLowerCase() === "local";
-    const nosotros = `<div class="match-side"><div class="match-badge"><img src="assets/crest.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
-    const rivalHtml = `<div class="match-side"><div class="match-badge rival">${(proximo.rival || "?").charAt(0)}</div><span>${proximo.rival}</span></div>`;
+  if (!proximo) {
     box.innerHTML = `
-      <span class="tag">Próximo partido</span>
-      <div class="match-teams-row">
-        ${local ? nosotros : rivalHtml}
-        <span class="match-vs">VS</span>
-        ${local ? rivalHtml : nosotros}
-      </div>
-      <p class="next-match-info">${fmtFecha(proximo.fecha)} · ${proximo.condicion} · ${proximo.torneo}</p>
+      <div class="match-card-head"><span class="tag">Próximo partido</span></div>
+      <p class="empty">Sin partidos programados por ahora.</p>
     `;
-  } else {
-    box.innerHTML = `<span class="tag">Sin partidos programados</span>`;
+    return;
   }
 
-  let socialHtml = "";
-  if (equipo.instagram) {
-    socialHtml += `<a href="${equipo.instagram}" target="_blank" rel="noopener">${ICONS.instagram} Instagram</a>`;
+  box.innerHTML = `
+    <div class="match-card-head">
+      <span class="tag">Próximo partido</span>
+      <span class="match-card-torneo">${escapeHtml(proximo.torneo || "")}</span>
+    </div>
+    ${equiposEnfrentados(proximo, `<span class="match-vs">VS</span>`)}
+    <div class="match-card-foot">
+      <span><strong>${fechaLarga(proximo.fecha)}</strong> · ${escapeHtml(proximo.condicion || "")}</span>
+      <span class="countdown">${textoCuentaRegresiva(proximo.fecha)}</span>
+    </div>
+  `;
+  hacerClickeable(box, () => abrirModalPartido(proximo.fecha, proximo.rival));
+  box.setAttribute("aria-label", `Ver detalle del partido vs ${proximo.rival}`);
+}
+
+function renderUltimoResultado(data) {
+  const box = document.getElementById("last-match");
+  const ultimo = data.partidos
+    .filter(p => p.estado === "jugado" && p.golesFavor !== null && p.golesContra !== null)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+
+  if (!ultimo) {
+    box.innerHTML = "";
+    return;
   }
-  document.getElementById("social-links").innerHTML = socialHtml;
+
+  const local = ultimo.condicion && ultimo.condicion.toLowerCase() === "local";
+  const clase = resultadoClase(ultimo);
+  const izq = local ? ultimo.golesFavor : ultimo.golesContra;
+  const der = local ? ultimo.golesContra : ultimo.golesFavor;
+
+  const goleadores = {};
+  data.goles
+    .filter(g => g.fecha === ultimo.fecha && g.rival === ultimo.rival && esJugadorPropio(g.jugador))
+    .forEach(g => { goleadores[g.jugador] = (goleadores[g.jugador] || 0) + 1; });
+  const goleadoresTexto = Object.entries(goleadores)
+    .map(([j, n]) => n > 1 ? `${j} (${n})` : j)
+    .join(", ");
+
+  box.innerHTML = `
+    <div class="match-card-head">
+      <span class="tag">Último resultado</span>
+      <span class="match-card-torneo">${escapeHtml(ultimo.torneo || "")}</span>
+    </div>
+    ${equiposEnfrentados(ultimo, `<span class="match-score-big">${izq}<span class="sep">-</span>${der}</span>`)}
+    <div class="match-card-foot">
+      ${goleadoresTexto
+        ? `<span class="scorers">${ICONS.ball}<span>${escapeHtml(goleadoresTexto)}</span></span>`
+        : `<span><strong>${fechaLarga(ultimo.fecha)}</strong> · ${escapeHtml(ultimo.condicion || "")}</span>`}
+      <span class="result-pill ${clase}">${RESULTADO_TEXTO[clase]}</span>
+    </div>
+  `;
+  hacerClickeable(box, () => abrirModalPartido(ultimo.fecha, ultimo.rival));
+  box.setAttribute("aria-label", `Ver detalle del partido vs ${ultimo.rival}`);
 }
 
 function renderRecord(data) {
@@ -111,28 +275,26 @@ function renderRecord(data) {
     total.pts = total.pg * 3 + total.pe;
 
     chipsHtml = `
-      <div class="record-chip"><span class="value">${total.pj}</span><span class="label">PJ</span></div>
-      <div class="record-chip"><span class="value">${total.pg}</span><span class="label">PG</span></div>
-      <div class="record-chip"><span class="value">${total.pe}</span><span class="label">PE</span></div>
-      <div class="record-chip"><span class="value">${total.pp}</span><span class="label">PP</span></div>
-      <div class="record-chip"><span class="value">${total.pts}</span><span class="label">Pts</span></div>
+      <div class="record-chip"><span class="value">${total.pj}</span><span class="label">Jugados</span></div>
+      <div class="record-chip"><span class="value">${total.pg}</span><span class="label">Ganados</span></div>
+      <div class="record-chip"><span class="value">${total.pe}</span><span class="label">Empates</span></div>
+      <div class="record-chip"><span class="value">${total.pp}</span><span class="label">Perdidos</span></div>
+      <div class="record-chip pts"><span class="value">${total.pts}</span><span class="label">Puntos</span></div>
     `;
   }
 
-  const ultimos = data.partidos
-    .filter(p => p.estado === "jugado")
+  const ultimos = jugados
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
     .slice(-5);
 
   const dotsHtml = ultimos.map(p => {
-    const gano = p.golesFavor > p.golesContra;
-    const perdio = p.golesFavor < p.golesContra;
-    const clase = gano ? "win" : perdio ? "loss" : "draw";
-    const letra = gano ? "G" : perdio ? "P" : "E";
-    return `<span class="form-dot ${clase}" title="${p.rival}: ${p.golesFavor}-${p.golesContra}">${letra}</span>`;
+    const clase = resultadoClase(p);
+    return `<span class="form-dot ${clase}" title="${escapeHtml(p.rival)}: ${p.golesFavor}-${p.golesContra}">${RESULTADO_LETRA[clase]}</span>`;
   }).join("");
 
-  cont.innerHTML = chipsHtml + (dotsHtml ? `<div class="form-dots">${dotsHtml}</div>` : "");
+  cont.innerHTML = chipsHtml + (dotsHtml
+    ? `<div class="form-dots"><span class="label">Últimos 5</span><div class="dots">${dotsHtml}</div></div>`
+    : "");
 }
 
 function renderPlantel(jugadores) {
@@ -146,16 +308,20 @@ function renderPlantel(jugadores) {
 
   cont.innerHTML = grupos.map(g => `
     <div class="position-group">
-      <p class="position-title">${POSICION_PLURAL[g.pos] || g.pos}</p>
+      <p class="position-title">${POSICION_PLURAL[g.pos] || g.pos} <small>${g.jugadores.length}</small></p>
       <div class="plantel-grid">
         ${g.jugadores.map(j => `
-          <div class="player-card" data-jugador="${j.nombre}" tabindex="0" role="button" aria-label="Ver estadísticas de ${j.nombre}">
+          <div class="player-card" data-jugador="${escapeHtml(j.nombre)}" aria-label="Ver estadísticas de ${escapeHtml(j.nombre)}">
             <div class="player-photo">
-              ${j.foto ? `<img src="${j.foto}" alt="${j.nombre}">` : `<span>${j.numero}</span>`}
+              ${j.foto
+                ? `<img src="${j.foto}" alt="${escapeHtml(j.nombre)}" loading="lazy">`
+                : `<span class="player-initial">${escapeHtml(j.nombre.charAt(0))}</span>`}
             </div>
-            <p class="player-number">#${j.numero}</p>
-            <p class="player-name">${j.nombre}</p>
-            <p class="player-position">${j.posicion}</p>
+            ${j.numero ? `<p class="player-number">${j.numero}</p>` : ""}
+            <div class="player-info">
+              <p class="player-name">${escapeHtml(j.nombre)}</p>
+              <p class="player-position">${escapeHtml(j.posicion || "")}</p>
+            </div>
           </div>
         `).join("")}
       </div>
@@ -163,14 +329,30 @@ function renderPlantel(jugadores) {
   `).join("") || "<p class='empty'>Todavía no hay jugadores cargados.</p>";
 
   cont.querySelectorAll(".player-card").forEach(card => {
-    card.addEventListener("click", () => abrirModalJugador(card.dataset.jugador));
-    card.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        abrirModalJugador(card.dataset.jugador);
-      }
-    });
+    hacerClickeable(card, () => abrirModalJugador(card.dataset.jugador));
   });
+}
+
+function filaPartidoHtml(p) {
+  const { dia, mes } = fechaCorta(p.fecha);
+  const meta = [p.condicion, p.torneo].filter(Boolean).map(escapeHtml).join(" · ");
+  let derecha;
+  if (p.estado === "jugado" && p.golesFavor !== null && p.golesContra !== null) {
+    const clase = resultadoClase(p);
+    derecha = `<span class="match-score">${p.golesFavor}-${p.golesContra}<span class="form-dot ${clase}">${RESULTADO_LETRA[clase]}</span></span>`;
+  } else {
+    derecha = `<span class="match-cond">${textoCuentaRegresiva(p.fecha)}</span>`;
+  }
+  return `
+    <div class="match-row" data-fecha="${p.fecha}" data-rival="${escapeHtml(p.rival)}" aria-label="Ver detalle del partido vs ${escapeHtml(p.rival)}">
+      <span class="match-date"><b>${dia}</b>${mes}</span>
+      <span class="match-teams">
+        <span class="match-rival"><small>vs</small>${escapeHtml(p.rival)}</span>
+        <span class="match-meta">${meta}</span>
+      </span>
+      ${derecha}
+    </div>
+  `;
 }
 
 function renderFixture(partidos) {
@@ -178,65 +360,51 @@ function renderFixture(partidos) {
   const proximos = partidos.filter(p => p.estado === "proximo").sort((a, b) => a.fecha.localeCompare(b.fecha));
 
   const resultadosCont = document.getElementById("resultados-list");
-  resultadosCont.innerHTML = jugados.map(p => {
-    const gano = p.golesFavor > p.golesContra;
-    const perdio = p.golesFavor < p.golesContra;
-    const claseResultado = gano ? "win" : perdio ? "loss" : "draw";
-    return `
-      <div class="match-row ${claseResultado}" data-fecha="${p.fecha}" data-rival="${p.rival}" tabindex="0" role="button" aria-label="Ver detalle del partido vs ${p.rival}">
-        <span class="match-date">${fmtFecha(p.fecha)}</span>
-        <span class="match-teams">En Fugeira FC ${p.golesFavor} - ${p.golesContra} ${p.rival}</span>
-        <span class="match-tags">
-          <span class="match-cond">${p.condicion}</span>
-          ${p.torneo ? `<span class="match-torneo">${p.torneo}</span>` : ""}
-        </span>
-      </div>
-    `;
-  }).join("") || "<p class='empty'>Todavía no hay resultados cargados.</p>";
+  resultadosCont.innerHTML = jugados.map(filaPartidoHtml).join("")
+    || "<p class='empty'>Todavía no hay resultados cargados.</p>";
 
   const proximosCont = document.getElementById("proximos-list");
-  proximosCont.innerHTML = proximos.map(p => `
-    <div class="match-row upcoming" data-fecha="${p.fecha}" data-rival="${p.rival}" tabindex="0" role="button" aria-label="Ver detalle del partido vs ${p.rival}">
-      <span class="match-date">${fmtFecha(p.fecha)}</span>
-      <span class="match-teams">En Fugeira FC vs ${p.rival}</span>
-      <span class="match-tags">
-        <span class="match-cond">${p.condicion}</span>
-        ${p.torneo ? `<span class="match-torneo">${p.torneo}</span>` : ""}
-      </span>
-    </div>
-  `).join("") || "<p class='empty'>Sin próximos partidos por ahora.</p>";
+  proximosCont.innerHTML = proximos.map(filaPartidoHtml).join("")
+    || "<p class='empty'>Sin próximos partidos por ahora.</p>";
 
   [resultadosCont, proximosCont].forEach(cont => {
     cont.querySelectorAll(".match-row").forEach(row => {
-      row.addEventListener("click", () => abrirModalPartido(row.dataset.fecha, row.dataset.rival));
-      row.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          abrirModalPartido(row.dataset.fecha, row.dataset.rival);
-        }
-      });
+      hacerClickeable(row, () => abrirModalPartido(row.dataset.fecha, row.dataset.rival));
     });
   });
 }
 
-function renderGoleadores(goles) {
-  const conteo = {};
-  goles.forEach(g => { conteo[g.jugador] = (conteo[g.jugador] || 0) + 1; });
-  const ranking = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
-
-  const cont = document.getElementById("goleadores-list");
-  cont.innerHTML = ranking.map(([jugador, cant], i) => `
-    <div class="stat-row">
-      <span class="stat-rank">${i + 1}</span>
-      <span class="stat-name">${jugador}</span>
-      <span class="stat-value">${cant} ${ICONS.ball}</span>
-    </div>
-  `).join("") || "<p class='empty'>Todavía no hay goles cargados en este torneo.</p>";
+// Ranking estilo deportivo: empatados comparten puesto (1, 1, 3...)
+function puestos(valores) {
+  return valores.map((v, i) => valores.indexOf(v) + 1);
 }
 
-function renderTarjetas(tarjetas) {
+function renderGoleadores(goles, esTemporada) {
   const conteo = {};
-  tarjetas.forEach(t => {
+  // Solo jugadores nuestros: los goles de rivales se cargan para la cronología
+  goles.filter(g => esJugadorPropio(g.jugador))
+    .forEach(g => { conteo[g.jugador] = (conteo[g.jugador] || 0) + 1; });
+  const ranking = Object.entries(conteo).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const rangos = puestos(ranking.map(r => r[1]));
+
+  const cont = document.getElementById("goleadores-list");
+  const max = ranking.length ? ranking[0][1] : 0;
+  const total = ranking.reduce((acc, r) => acc + r[1], 0);
+  cont.innerHTML = ranking.length ? `
+    ${ranking.map(([jugador, cant], i) => `
+      <div class="stat-row ${rangos[i] === 1 ? "leader" : ""}" style="--pct: ${(cant / max).toFixed(3)}">
+        <span class="stat-rank">${rangos[i]}</span>
+        <span class="stat-name">${escapeHtml(jugador)}</span>
+        <span class="stat-value">${cant} ${ICONS.ball}</span>
+      </div>
+    `).join("")}
+    <p class="stat-total">${total} goles de ${ranking.length} jugadores ${esTemporada ? "en la temporada" : "en el torneo"}</p>
+  ` : `<p class='empty'>Todavía no hay goles cargados ${esTemporada ? "esta temporada" : "en este torneo"}.</p>`;
+}
+
+function renderTarjetas(tarjetas, esTemporada) {
+  const conteo = {};
+  tarjetas.filter(t => esJugadorPropio(t.jugador)).forEach(t => {
     if (!conteo[t.jugador]) conteo[t.jugador] = { amarillas: 0, rojas: 0 };
     if (t.tipo.toLowerCase().startsWith("amar")) conteo[t.jugador].amarillas++;
     if (t.tipo.toLowerCase().startsWith("roj")) conteo[t.jugador].rojas++;
@@ -248,17 +416,18 @@ function renderTarjetas(tarjetas) {
     return totalB - totalA;
   });
 
+  // El aviso de suspensión solo tiene sentido dentro de un torneo
   const cont = document.getElementById("tarjetas-list");
   cont.innerHTML = ranking.map(([jugador, c]) => `
     <div class="stat-row">
-      <span class="stat-name">${jugador}</span>
+      <span class="stat-name">${escapeHtml(jugador)}</span>
       <span class="stat-value">
         ${c.amarillas ? `<span class="card-badge yellow">${c.amarillas}</span>` : ""}
         ${c.rojas ? `<span class="card-badge red">${c.rojas}</span>` : ""}
-        ${c.amarillas >= 3 ? `<span class="suspension-warning">⚠ riesgo de suspensión</span>` : ""}
+        ${!esTemporada && c.amarillas >= 3 ? `<span class="suspension-warning">⚠ riesgo de suspensión</span>` : ""}
       </span>
     </div>
-  `).join("") || "<p class='empty'>Todavía no hay tarjetas cargadas en este torneo.</p>";
+  `).join("") || `<p class='empty'>Todavía no hay tarjetas cargadas ${esTemporada ? "esta temporada" : "en este torneo"}.</p>`;
 }
 
 function renderPosiciones(posiciones) {
@@ -294,36 +463,86 @@ function renderPosiciones(posiciones) {
   `;
 }
 
-function renderTorneoFilter() {
-  const torneos = getTorneosOrdenados(appData);
-  const html = torneos.map(t => `
-    <button class="torneo-pill ${t === torneoActual ? "active" : ""}" data-torneo="${t}">${t}</button>
-  `).join("");
+// Temporadas = años con partidos cargados, la más reciente primero
+function getTemporadas(data) {
+  return [...new Set(data.partidos.map(p => (p.fecha || "").slice(0, 4)).filter(Boolean))].sort().reverse();
+}
 
-  ["torneo-filter-stats", "torneo-filter-posiciones"].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = html;
-    el.querySelectorAll(".torneo-pill").forEach(btn => {
-      btn.addEventListener("click", () => setTorneo(btn.dataset.torneo));
-    });
+const PREFIJO_TEMPORADA = "temporada:";
+
+function renderPills(id, opciones, activa, alElegir) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = opciones.map(o => `
+    <button class="torneo-pill ${o.valor === activa ? "active" : ""} ${o.destacada ? "pill-season" : ""}" data-valor="${escapeHtml(o.valor)}">${escapeHtml(o.texto)}</button>
+  `).join("");
+  el.querySelectorAll(".torneo-pill").forEach(btn => {
+    btn.addEventListener("click", () => alElegir(btn.dataset.valor));
   });
 }
 
-function renderVistaTorneo() {
-  const goles = appData.goles.filter(g => g.torneo === torneoActual);
-  const tarjetas = appData.tarjetas.filter(t => t.torneo === torneoActual);
-  const posiciones = appData.posiciones.filter(p => p.torneo === torneoActual);
+function renderTorneoFilter() {
+  const torneos = getTorneosOrdenados(appData);
+  const temporadas = getTemporadas(appData);
 
-  renderGoleadores(goles);
-  renderTarjetas(tarjetas);
-  renderPosiciones(posiciones);
+  renderPills("torneo-filter-stats", [
+    ...temporadas.map(a => ({ valor: PREFIJO_TEMPORADA + a, texto: `Todo ${a}`, destacada: true })),
+    ...torneos.map(t => ({ valor: t, texto: t }))
+  ], filtroStats, valor => { filtroStats = valor; renderTorneoFilter(); renderVistaStats(); });
+
+  renderPills("torneo-filter-posiciones", torneos.map(t => ({ valor: t, texto: t })),
+    torneoActual, valor => { torneoActual = valor; renderTorneoFilter(); renderPosiciones(appData.posiciones.filter(p => p.torneo === torneoActual)); });
 }
 
-function setTorneo(torneo) {
-  torneoActual = torneo;
-  renderTorneoFilter();
-  renderVistaTorneo();
+// Resumen en tarjetas de los partidos jugados en el filtro elegido
+function renderNumeros(partidos) {
+  const cont = document.getElementById("season-numbers");
+  const jugados = partidos.filter(p => p.estado === "jugado" && p.golesFavor !== null && p.golesContra !== null);
+  if (!jugados.length) {
+    cont.innerHTML = "";
+    return;
+  }
+
+  const gf = jugados.reduce((acc, p) => acc + p.golesFavor, 0);
+  const gc = jugados.reduce((acc, p) => acc + p.golesContra, 0);
+  const invictas = jugados.filter(p => p.golesContra === 0).length;
+  const victorias = jugados.filter(p => p.golesFavor > p.golesContra);
+  const mayor = victorias.sort((a, b) =>
+    (b.golesFavor - b.golesContra) - (a.golesFavor - a.golesContra) || b.golesFavor - a.golesFavor)[0];
+  const promedio = n => (n / jugados.length).toFixed(1).replace(".", ",");
+
+  const tiles = [
+    { valor: gf, label: "Goles a favor", detalle: `${promedio(gf)} por partido` },
+    { valor: gc, label: "Goles en contra", detalle: `${promedio(gc)} por partido` },
+    { valor: invictas, label: "Vallas invictas", detalle: `en ${jugados.length} partidos` },
+    mayor
+      ? { valor: `${mayor.golesFavor}-${mayor.golesContra}`, label: "Mayor victoria", detalle: `vs ${escapeHtml(mayor.rival)}` }
+      : { valor: "—", label: "Mayor victoria", detalle: "todavía sin victorias" }
+  ];
+
+  cont.innerHTML = tiles.map(t => `
+    <div class="number-tile">
+      <span class="value">${t.valor}</span>
+      <span class="label">${t.label}</span>
+      <span class="detail">${t.detalle}</span>
+    </div>
+  `).join("");
+}
+
+function renderVistaStats() {
+  const esTemporada = filtroStats.startsWith(PREFIJO_TEMPORADA);
+  const coincide = esTemporada
+    ? x => (x.fecha || "").startsWith(filtroStats.slice(PREFIJO_TEMPORADA.length))
+    : x => x.torneo === filtroStats;
+
+  renderNumeros(appData.partidos.filter(coincide));
+  renderGoleadores(appData.goles.filter(coincide), esTemporada);
+  renderTarjetas(appData.tarjetas.filter(coincide), esTemporada);
+}
+
+function renderVistaTorneo() {
+  renderVistaStats();
+  renderPosiciones(appData.posiciones.filter(p => p.torneo === torneoActual));
 }
 
 function initNav() {
@@ -453,26 +672,80 @@ function abrirModalPartido(fecha, rival) {
     timelineHtml = "<p class='empty'>Todavía no hay goles ni tarjetas cargados para este partido.</p>";
   }
 
-  const nosotrosHtml = `<div class="match-side"><div class="match-badge"><img src="assets/crest.png" alt="En Fugeira FC"></div><span>En Fugeira</span></div>`;
-  const rivalHtml = `<div class="match-side"><div class="match-badge rival">${(partido.rival || "?").charAt(0)}</div><span>${partido.rival}</span></div>`;
+  const centro = jugado
+    ? `<div class="modal-match-score">${local ? partido.golesFavor : partido.golesContra} - ${local ? partido.golesContra : partido.golesFavor}</div>`
+    : `<span class="match-vs">VS</span>`;
 
   document.getElementById("modal-body").innerHTML = `
     <div class="modal-match-header">
-      ${partido.torneo ? `<span class="tag">${partido.torneo}</span>` : ""}
-      <div class="match-teams-row">
-        ${local ? nosotrosHtml : rivalHtml}
-        ${jugado ? `<div class="modal-match-score">${local ? partido.golesFavor : partido.golesContra} - ${local ? partido.golesContra : partido.golesFavor}</div>` : `<span class="match-vs">VS</span>`}
-        ${local ? rivalHtml : nosotrosHtml}
-      </div>
-      <p class="next-match-info">${fmtFecha(partido.fecha)} · ${partido.condicion}</p>
+      ${partido.torneo ? `<span class="tag">${escapeHtml(partido.torneo)}</span>` : ""}
+      ${equiposEnfrentados(partido, centro)}
+      <p class="next-match-info">${fechaLarga(partido.fecha)} · ${escapeHtml(partido.condicion || "")}</p>
     </div>
-    <div class="modal-torneos">
-      <h4>Cronología</h4>
-      ${timelineHtml}
+    ${jugado ? `
+      <div class="modal-torneos">
+        <h4>Cronología</h4>
+        ${timelineHtml}
+      </div>
+    ` : ""}
+    <div class="modal-actions">
+      ${!jugado ? `<button class="btn btn-primary" id="btn-agendar">${ICONS.calendar} Agendar</button>` : ""}
+      <button class="btn btn-ghost" id="btn-compartir">${ICONS.share} Compartir</button>
     </div>
   `;
 
+  if (!jugado) document.getElementById("btn-agendar").addEventListener("click", () => descargarIcs(partido));
+  document.getElementById("btn-compartir").addEventListener("click", e => compartirPartido(partido, e.currentTarget));
+
   mostrarModal();
+}
+
+// Archivo .ics de día completo: el celular lo abre directo en el calendario
+function descargarIcs(partido) {
+  const fecha = partido.fecha.replace(/-/g, "");
+  const siguiente = parseFecha(partido.fecha);
+  siguiente.setDate(siguiente.getDate() + 1);
+  const fin = `${siguiente.getFullYear()}${String(siguiente.getMonth() + 1).padStart(2, "0")}${String(siguiente.getDate()).padStart(2, "0")}`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//En Fugeira FC//Fixture//ES",
+    "BEGIN:VEVENT",
+    `UID:${fecha}-${partido.rival.replace(/\W+/g, "")}@enfugeira`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+    `DTSTART;VALUE=DATE:${fecha}`,
+    `DTEND;VALUE=DATE:${fin}`,
+    `SUMMARY:⚽ En Fugeira FC vs ${partido.rival}`,
+    `DESCRIPTION:${[partido.torneo, partido.condicion].filter(Boolean).join(" · ")}`,
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `en-fugeira-vs-${partido.rival.toLowerCase().replace(/\W+/g, "-")}.ics`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function compartirPartido(partido, boton) {
+  const jugado = partido.estado === "jugado" && partido.golesFavor !== null;
+  const texto = jugado
+    ? `En Fugeira FC ${partido.golesFavor}-${partido.golesContra} ${partido.rival} (${partido.torneo || fechaLarga(partido.fecha)})`
+    : `Próximo partido: En Fugeira FC vs ${partido.rival}, ${fechaLarga(partido.fecha)} (${partido.condicion})`;
+  const url = location.origin + location.pathname;
+
+  if (navigator.share) {
+    try { await navigator.share({ text: texto, url }); } catch (_) { /* cancelado */ }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(`${texto} ${url}`);
+    const original = boton.innerHTML;
+    boton.textContent = "¡Copiado!";
+    setTimeout(() => { boton.innerHTML = original; }, 1800);
+  } catch (_) { /* sin portapapeles */ }
 }
 
 function mostrarModal() {
@@ -568,19 +841,22 @@ function renderAlbumGrid() {
   cont.innerHTML = `
     <div class="album-grid">
       ${albumes.map((a, i) => `
-        <div class="album-card" data-index="${i}">
+        <div class="album-card" data-index="${i}" aria-label="Ver fotos: ${escapeHtml(a.titulo)}">
           <div class="album-cover">
-            <img src="${a.fotos[0].src}" alt="${a.titulo}" loading="lazy">
-            <span class="album-count">${a.fotos.length} 🖼</span>
+            <img src="${a.fotos[0].src}" alt="" loading="lazy">
+            <span class="album-count">${ICONS.photo} ${a.fotos.length}</span>
           </div>
-          <p class="album-title">${a.titulo}</p>
+          <div class="album-info">
+            <p class="album-title">${escapeHtml(a.titulo)}</p>
+            <p class="album-date">${fechaLarga(a.fecha)}</p>
+          </div>
         </div>
       `).join("")}
     </div>
   `;
 
   cont.querySelectorAll(".album-card").forEach(card => {
-    card.addEventListener("click", () => {
+    hacerClickeable(card, () => {
       const album = albumes[Number(card.dataset.index)];
       abrirAlbum(album.fotos, 0, album.titulo);
     });
@@ -664,26 +940,6 @@ function initScrollspy() {
   secciones.forEach(sec => observer.observe(sec));
 }
 
-// --- Animación de aparición al hacer scroll ---
-function initReveal() {
-  const elementos = document.querySelectorAll(".reveal");
-  if (!elementos.length || !("IntersectionObserver" in window)) {
-    elementos.forEach(el => el.classList.add("in-view"));
-    return;
-  }
-
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("in-view");
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  elementos.forEach(el => observer.observe(el));
-}
-
 function ocultarLoader() {
   const loader = document.getElementById("page-loader");
   loader.classList.add("hidden");
@@ -691,12 +947,15 @@ function ocultarLoader() {
 }
 
 async function init() {
+  initHeroCarrusel();
   initNav();
   initModal();
   initScrollspy();
 
   appData = inferirTorneos(await loadTeamData());
   torneoActual = getTorneoActualPorDefecto(appData);
+  const temporadas = getTemporadas(appData);
+  filtroStats = temporadas.length ? PREFIJO_TEMPORADA + temporadas[0] : torneoActual;
 
   renderHero(appData);
   renderRecord(appData);
@@ -707,7 +966,6 @@ async function init() {
   cargarGaleria();
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  initReveal();
   ocultarLoader();
 }
 

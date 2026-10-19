@@ -10,3 +10,13 @@ const SHEETS_CONFIG = {
   posiciones: `${SHEET_BASE}?gid=1691899206&single=true&output=csv`,
   equipo: `${SHEET_BASE}?gid=2067035770&single=true&output=csv`
 };
+
+// Fotos que van rotando de fondo en la portada (en este orden).
+// Para cambiarlas, poné acá la ruta de cualquier foto de assets/.
+const HERO_FOTOS = [
+  "assets/galeria/2026-07-12-la-costa/foto-01.jpg",
+  "assets/galeria/2026-06-14-porte/foto-11.jpg",
+  "assets/galeria/2026-06-14-porte/foto-09.jpg",
+  "assets/galeria/2026-07-12-la-costa/foto-13.jpg",
+  "assets/galeria/2026-07-12-la-costa/foto-03.jpg"
+];

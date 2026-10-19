@@ -2,26 +2,43 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>En Fugeira FC</title>
-  <meta name="description" content="Sitio oficial de En Fugeira Football Club: plantel, fixture, resultados, goleadores, tarjetas y tabla de posiciones.">
+  <meta name="description" content="Sitio oficial de En Fugeira Fútbol Club: plantel, fixture, resultados, goleadores, tarjetas y tabla de posiciones.">
+  <meta name="theme-color" content="#060b18">
   <link rel="icon" href="assets/crest.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="En Fugeira">
+
+  <!-- Vista previa al compartir el link (WhatsApp, Instagram, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_UY">
+  <meta property="og:site_name" content="En Fugeira FC">
+  <meta property="og:title" content="En Fugeira Fútbol Club">
+  <meta property="og:description" content="Plantel, fixture, resultados, goleadores y fotos de los partidos.">
+  <meta property="og:image" content="assets/icons/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
   <div id="page-loader" class="page-loader">
-    <img src="assets/crest.png" alt="">
+    <img src="assets/crest-shield.png" alt="">
     <span>Cargando datos del equipo…</span>
   </div>
 
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="#top" class="brand">
-        <img src="assets/crest.png" alt="Escudo En Fugeira FC">
+        <img src="assets/crest-shield.png" alt="Escudo En Fugeira FC">
         <span>En Fugeira <em>FC</em></span>
       </a>
       <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
@@ -38,41 +55,41 @@
   </nav>
 
   <header class="hero" id="top">
-    <div class="hero-bg"></div>
+    <div class="hero-media" id="hero-media"></div>
+    <div class="hero-shade"></div>
     <div class="hero-inner container">
-      <div class="hero-top">
-        <img class="hero-crest" src="assets/crest.png" alt="Escudo En Fugeira FC">
-        <div class="hero-titles">
-          <h1 id="team-name">En Fugeira FC</h1>
-          <p id="team-meta"></p>
-        </div>
-      </div>
-
+      <img class="hero-crest" src="assets/crest-shield.png" alt="Escudo En Fugeira FC">
+      <p class="hero-kicker" id="team-meta"></p>
+      <h1 id="team-name">En Fugeira <span>Fútbol Club</span></h1>
       <div id="team-record" class="record-row"></div>
-
-      <div id="next-match" class="next-match-box"></div>
-
-      <div id="social-links" class="social-links"></div>
+      <div id="social-links" class="hero-actions"></div>
     </div>
   </header>
 
+  <section class="matchday" aria-label="Partidos destacados">
+    <div class="container matchday-grid">
+      <div id="next-match" class="match-card"></div>
+      <div id="last-match" class="match-card"></div>
+    </div>
+  </section>
+
   <section id="plantel">
-    <div class="container reveal">
+    <div class="container">
       <div class="section-head">
         <span class="eyebrow">Plantel</span>
         <h2>El equipo</h2>
-        <p class="section-sub">Los jugadores que ponen la cara cada fin de semana.</p>
+        <p class="section-sub">Los que ponen la cara cada fin de semana. Tocá a un jugador para ver sus números.</p>
       </div>
       <div id="plantel-grid"></div>
     </div>
   </section>
 
   <section id="fixture" class="section-alt">
-    <div class="container reveal">
+    <div class="container">
       <div class="section-head">
         <span class="eyebrow">Calendario</span>
         <h2>Fixture y resultados</h2>
-        <p class="section-sub">Lo que viene y lo que ya jugamos esta temporada.</p>
+        <p class="section-sub">Lo que viene y lo que ya jugamos. Tocá un partido para ver goles y tarjetas.</p>
       </div>
       <div class="fixture-columns">
         <div>
@@ -88,19 +105,20 @@
   </section>
 
   <section id="estadisticas">
-    <div class="container reveal">
+    <div class="container">
       <div class="section-head">
         <span class="eyebrow">Números</span>
         <h2>Estadísticas</h2>
-        <p class="section-sub">Goleadores y disciplina del plantel, por torneo (las amarillas se cuentan solo dentro de cada torneo).</p>
+        <p class="section-sub">El año completo o torneo por torneo. El aviso de suspensión cuenta las amarillas dentro de cada torneo.</p>
       </div>
       <div id="torneo-filter-stats" class="torneo-filter"></div>
+      <div id="season-numbers" class="season-numbers"></div>
       <div class="stats-columns">
-        <div>
+        <div class="stats-panel">
           <h3><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg> Goleadores</h3>
           <div id="goleadores-list"></div>
         </div>
-        <div>
+        <div class="stats-panel">
           <h3><svg class="icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" transform="rotate(10 12 12)"/></svg> Tarjetas</h3>
           <div id="tarjetas-list"></div>
         </div>
@@ -109,7 +127,7 @@
   </section>
 
   <section id="posiciones" class="section-alt">
-    <div class="container reveal">
+    <div class="container">
       <div class="section-head">
         <span class="eyebrow">Torneo</span>
         <h2>Tabla de posiciones</h2>
@@ -121,7 +139,7 @@
   </section>
 
   <section id="galeria">
-    <div class="container reveal">
+    <div class="container">
       <div class="section-head">
         <span class="eyebrow">Fotos</span>
         <h2>Galería</h2>
@@ -133,8 +151,8 @@
   </section>
 
   <section id="sponsors" class="section-alt">
-    <div class="container reveal">
-      <div class="section-head">
+    <div class="container">
+      <div class="section-head section-head--center">
         <span class="eyebrow">Gracias</span>
         <h2>Sponsors</h2>
       </div>
@@ -162,10 +180,20 @@
   <footer>
     <div class="container footer-inner">
       <div class="footer-brand">
-        <img src="assets/crest.png" alt="Escudo En Fugeira FC">
-        <span>En Fugeira FC</span>
+        <img src="assets/crest-shield.png" alt="Escudo En Fugeira FC">
+        <div>
+          <span>En Fugeira FC</span>
+          <p>Fútbol Club · Desde 2026</p>
+        </div>
       </div>
-      <p>&copy; <span id="year"></span> En Fugeira Football Club</p>
+      <nav class="footer-links" aria-label="Secciones">
+        <a href="#plantel">Plantel</a>
+        <a href="#fixture">Fixture</a>
+        <a href="#estadisticas">Estadísticas</a>
+        <a href="#posiciones">Posiciones</a>
+        <a href="#galeria">Galería</a>
+      </nav>
+      <p class="footer-copy">&copy; <span id="year"></span> En Fugeira Fútbol Club</p>
     </div>
   </footer>
 
@@ -186,9 +214,9 @@
       <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/></svg>
       <span>Stats</span>
     </a>
-    <a href="#posiciones" data-target="posiciones">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>
-      <span>Tabla</span>
+    <a href="#galeria" data-target="galeria">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 8"/></svg>
+      <span>Fotos</span>
     </a>
   </nav>
 
